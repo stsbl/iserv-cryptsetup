@@ -1,0 +1,6 @@
+debian/stsbl-iserv-cryptsetup/*
+debian/stsbl-iserv-cryptsetup.substvars
+debian/stsbl-iserv-cryptsetup.debhelper.log
+debian/files
+debian/debhelper-build-stamp
+debian/*.debhelper

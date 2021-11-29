@@ -1,0 +1,47 @@
+Source: stsbl-iserv-cryptsetup
+Section: misc
+Priority: optional
+Maintainer: Stadtteilschule Blankenese <repository@stsbl.de>
+Build-Depends: debhelper-compat (= 13),
+  dh-sequence-iserv,
+  dh-sequence-stsbl,
+Standards-Version: 4.5.1
+Rules-Requires-Root: no
+Homepage: https://it.stsbl.de/
+
+Package: stsbl-iserv-cryptsetup
+Architecture: all
+Depends: ${misc:Depends},
+  ${perl:Depends},
+  cryptsetup,
+  cryptsetup-initramfs,
+  curl,
+  dialog,
+  dropbear-initramfs,
+  gpg,
+  gpg-agent,
+  initramfs-tools,
+  iserv-config,
+  iserv-config-file,
+  iserv-update,
+  libccid,
+  libjson-perl,
+  libpcsclite1,
+  libstring-shellquote-perl,
+  pcscd,
+  pinentry-tty,
+  pwgen,
+  scdaemon,
+Description:  LUKS-GPG-Festplattenverschlüsselung für IServ
+ Unterstützt die Verschlüsselung der Systemfestplatte über LUKS samt
+ Entsperrung über ein hybrides Verfahren mit einem GPG-Schlüssel.
+ .
+ Der verschlüsselte Datenträger muss vorher über Standardwerkzeuge
+ von Debian eingerichtet werden. Empfohlen wird folgende Konfiguration:
+ madm-RAID, darauf LUKS-Container und darin ein LVM.
+ .
+ Bestehende Server können nicht umgestellt werden. Es muss entweder ein Debian
+ mit dem Standard-Debian-Installer (der IServ Installer unterstützt keine
+ Verschlüsselung) installiert oder der bestehende Server auf ein neu
+ eingerichtetes Dateisystem umgezogen werden.
+Tag: suite::iserv

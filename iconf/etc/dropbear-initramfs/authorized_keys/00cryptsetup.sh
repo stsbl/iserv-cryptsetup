@@ -4,7 +4,7 @@
 
 for Act in "${DropbearAuthorizedAccounts[@]}"
 do
-  if ! getent passwd "$Act"
+  if ! getent passwd "$Act" &> /dev/null
   then
     echo "Invalid account $Act in DropbearAuthorizedAccounts!" >&2
     exit 1

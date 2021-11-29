@@ -8,19 +8,19 @@ use Stsbl::IServ::Cryptsetup qw(find_root);
 
 my %root = find_root;
 
-my %args;
-tie %args, "Tie::IxHash";
-
-$args{target} = $root{cryptroot}->{name};
-$args{source} = "UUID=$root{cryptroot_parent}->{uuid}";
-$args{key} = "/etc/keys/cryptkey.gpg";
-$args{keyscript} = "/lib/cryptsetup/scripts/decrypt_gnupg_sc";
-
-die "Could not obtain cryptroot information!\n" if
+do { print "\n"; exit; } if
     not defined $root{root_device} or
     not defined $root{cryptroot} or
     not defined $root{cryptroot_parent}
 ;
+
+my %args;
+tie %args, "Tie::IxHash";
+
+$args{target} = $root{cryptroot}->{name} // "";
+$args{source} = "UUID=$root{cryptroot_parent}->{uuid}";
+$args{key} = "/etc/keys/cryptkey.gpg";
+$args{keyscript} = "/lib/cryptsetup/scripts/decrypt_gnupg_sc";
 
 if ($root{root_device}->{type} eq "lvm")
 {

@@ -7,13 +7,13 @@ addmenu() { MENU[$((i++))]="$1"; MENU[$((i++))]="$2"; }
 dlg() { "${DLG[@]}" "$@"; }
 cryptgpg() { gpg --homedir /etc/keys "$@"; }
 
-CRYPTROOT="$(./lib/cryptsetup/query_cryptroot cryptroot path)"
-CRYPTROOT_PARENT="$(./lib/cryptsetup/query_cryptroot cryptroot_parent path)"
+CRYPTROOT="$(/usr/lib/iserv/cryptsetup/query_cryptroot cryptroot path)"
+CRYPTROOT_PARENT="$(/usr/lib/cryptsetup/query_cryptroot cryptroot_parent path)"
 
 if [ -z "$CRYPTROOT" ] || [ -z "$CRYPTROOT_PARENT" ]
 then
   dlg --msgbox "Cryptroot nicht gefunden!" 0 0
-  exit 1
+  exit 0
 fi
 
 if [ -s "/etc/keys/cryptkey.gpg" ]
@@ -22,7 +22,7 @@ then
 else
   if ! dlg --yesno "Festplattenverschlüsselung jetzt einrichten?" 0 0
   then
-    exit 1
+    exit 0
   fi
 
   if ! [ -f "/etc/keys/cryptkey" ]
@@ -170,6 +170,8 @@ do
       for KEY_ID in "${KEY_IDs[@]}"
       do
       	RECIPIENTS+=("-r" "$KEY_ID")
+      	# Must trust the key to allow signing with them
+      	echo -e "5\ny\n" | cryptgpg --command-fd 0 --expert --edit-key "$KEY_ID" trust
       done
 
       if [ -f "/etc/keys/cryptkey" ] && [ -f "/etc/keys/cryptkey.gpg" ]
