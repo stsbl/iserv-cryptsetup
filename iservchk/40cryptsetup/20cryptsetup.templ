@@ -17,4 +17,4 @@ Test "update /etc/crypttab"
   gencrypttab > /etc/crypttab
 
 Shell "update-initramfs"
-  ! [ "$REPAIR" ] || update-initramfs -k all -u
+  ! [ "\$REPAIR" ] || update-initramfs -k all -u
