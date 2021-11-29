@@ -1,0 +1,14 @@
+DropbearAuthorizedAccounts:
+name		Accounts authorized for Dropbear
+description	Account whose SSH keys can be used to access the initramfs via SSH as root in order to perform disk unlocking or other maintainance tasks.
+group		Disk encryption
+type		array
+default		("root")
+readonly	true
+
+InitramfsNetworkInterface:
+name		Network interface to be brought up on boot
+description	The initramfs is able to configure exactly one network interface via DHCP upon boot. This allows to access the initramfs using SSH order to perform disk unlocking or other maintainance tasks.
+group		Disk encryption
+type		string
+readonly	true

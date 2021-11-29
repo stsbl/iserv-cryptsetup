@@ -1,0 +1,11 @@
+#!/usr/bin/perl -CSDAL
+
+use warnings;
+use strict;
+use Stsbl::IServ::Cryptsetup qw(find_root);
+
+my %info = find_root;
+
+die "Usage: $0 device-type field\n" unless @ARGV == 2;
+
+print(($info{ shift(@ARGV) }{ shift(@ARGV) } // "") . "\n");

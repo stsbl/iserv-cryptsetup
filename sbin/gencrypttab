@@ -1,0 +1,12 @@
+#!/usr/bin/perl -CSDAL
+
+use warnings;
+use strict;
+use Stsbl::IServ::Cryptsetup qw(find_cryptdevices);
+
+print "# <target name>\t<source device>\t\t<key file>\t\t<options>\n";
+
+for my $cryptdevice (find_cryptdevices)
+{
+  print "$cryptdevice->{name}\tUUID=$cryptdevice->{parent}->{uuid}\t/etc/keys/cryptkey.gpg\tluks,discard,initramfs,keyscript=decrypt_gnupg_sc\n"; 
+}
