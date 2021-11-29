@@ -1,5 +1,5 @@
-stsbl-iserv-cryptsetup (21.11.29-1) UNRELEASED; urgency=medium
+stsbl-iserv-cryptsetup (21.11.29.1) stable; urgency=medium
 
-  * Initial Release.
+  * Initial release
 
- -- Stadtteilschule Blankenese <repository@stsbl.de>  Mon, 29 Nov 2021 08:54:25 +0100
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Mon, 29 Nov 2021 09:46:43 +0100
