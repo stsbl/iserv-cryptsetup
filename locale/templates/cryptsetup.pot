@@ -1,0 +1,43 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-12-05 02:04+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: config/80cryptsetup
+msgid ""
+"Account whose SSH keys can be used to access the initramfs via SSH as root "
+"in order to perform disk unlocking or other maintainance tasks."
+msgstr ""
+
+#: config/80cryptsetup
+msgid "Accounts authorized for Dropbear"
+msgstr ""
+
+#: config/80cryptsetup
+msgid "Disk encryption"
+msgstr ""
+
+#: config/80cryptsetup
+msgid "Network interface to be brought up on boot"
+msgstr ""
+
+#: config/80cryptsetup
+msgid ""
+"The initramfs is able to configure exactly one network interface via DHCP "
+"upon boot. This allows to access the initramfs using SSH in order to perform "
+"disk unlocking or other maintainance tasks."
+msgstr ""
