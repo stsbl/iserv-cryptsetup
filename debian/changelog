@@ -1,3 +1,10 @@
+stsbl-iserv-cryptsetup (21.12.10.1) stable; urgency=medium
+
+  * Fixed lvm file descriptor warning, added missing dependency, updated
+    lvm argument handling in cryptroot
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Fri, 10 Dec 2021 16:29:14 +0100
+
 stsbl-iserv-cryptsetup (21.12.05.1) stable; urgency=medium
 
   * Added locales
