@@ -1,3 +1,9 @@
+stsbl-iserv-cryptsetup (21.12.17.1) stable; urgency=medium
+
+  * Iservcfg cryptkey: Fixed adding crpytkey to LUKS container
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Fri, 17 Dec 2021 22:39:47 +0100
+
 stsbl-iserv-cryptsetup (21.12.10.1) stable; urgency=medium
 
   * Fixed lvm file descriptor warning, added missing dependency, updated
