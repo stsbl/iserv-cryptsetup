@@ -32,8 +32,8 @@ else
     dd if=/dev/random bs=1 count=256 of=/etc/keys/cryptkey.create
 
     dlg --msgbox "Bitte nun Passphrase von $CRYPTROOT zweimal angeben." 0 0
-    cryptsetup luksAddKey "$CRYPTROOT" "/etc/keys/cryptkey.create"
-    cryptsetup luksAddKey "$CRYPTROOT" "/etc/keys/cryptkey.create"
+    cryptsetup luksAddKey "$CRYPTROOT_PATENT" "/etc/keys/cryptkey.create" || { dlg --mgbx "Hinzufügen von Cryptkey zu $CRYPTROOT_PARENT fehlgeschlagen." 0 0; exit 1; }
+    cryptsetup luksAddKey "$CRYPTROOT_PARENT" "/etc/keys/cryptkey.create" || { dlg --mgbx "Hinzufügen von Cryptkey zu $CRYPTROOT_PARENT fehlgeschlagen." 0 0; exit 1; }
     mv /etc/keys/cryptkey.create /etc/keys/cryptkey
   fi
 fi
