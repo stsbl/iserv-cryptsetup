@@ -1,3 +1,11 @@
+stsbl-iserv-cryptsetup (21.12.28.1) stable; urgency=medium
+
+  * Stsbl::IServ::Cryptsetup: Fixed finding root partition when other
+    mounted partitions are in same volume group
+  * iservcfg cryptkey: Fixed typos
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Tue, 28 Dec 2021 05:28:19 +0100
+
 stsbl-iserv-cryptsetup (21.12.17.1) stable; urgency=medium
 
   * Iservcfg cryptkey: Fixed adding crpytkey to LUKS container
