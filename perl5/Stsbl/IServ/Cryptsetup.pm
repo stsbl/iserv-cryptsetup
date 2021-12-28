@@ -26,24 +26,30 @@ sub find_root()
     for my $block_device (@_)
     {
       return if defined $root_device;
+
       $cryptroot_parent = $block_device if not defined $cryptroot and
           $block_device->{type} ne "crypt";
       $cryptroot = $block_device if $block_device->{type} eq "crypt"; 
 
-      if (defined $block_device->{mountpoint} and $block_device->{mountpoint} eq "/")
+      if (defined $block_device->{mountpoint} and $block_device->{mountpoint} ne "/")
       {
-      	$root_device = $block_device;
-      	last;
+        # probably a SWAP (mountpoint is "[SWAP]") partition on same level as root partiion
+        next;
+      }
+      elsif (defined $block_device->{mountpoint} and $block_device->{mountpoint} eq "/")
+      {
+        $root_device = $block_device;
+        last;
       }
       elsif (not defined $block_device->{children})
       {
-      	undef $root_device;
-      	undef $cryptroot_parent;
-      	undef $cryptroot;
+        undef $root_device;
+        undef $cryptroot_parent;
+        undef $cryptroot;
       }
       else
       {
-      	__SUB__->(@{ $block_device->{children} });
+        __SUB__->(@{ $block_device->{children} });
       }
     }
   }
