@@ -1,0 +1,7 @@
+#!/usr/bin/perl -CSDAL
+
+use warnings;
+use strict;
+use Stsbl::IServ::Cryptsetup qw(find_cryptdevices);
+
+print "$_->{parent}->{path}\n" for find_cryptdevices;

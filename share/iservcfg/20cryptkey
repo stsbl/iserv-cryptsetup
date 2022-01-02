@@ -50,6 +50,8 @@ do
   addmenu 3 "Schlüssel von Datei hinzufügen"
   addmenu 4 "Schlüssel auflisten"
   addmenu 5 "Schlüssel entfernen"
+  addmenu 6 "Alle LUKS-Geräte mit Cryptkey verschlüsseln"
+  addmenu 7 "Bestimmte Passphrase von allen LUKS-Geräten entfernen"
   addmenu - "---"
   addmenu test "Selbsttest durchführen"
   
@@ -74,7 +76,7 @@ do
     1 )
       unset SEARCH
       RES=$(dlg --inputbox "Suchkriterium für keys.openpgp.org:" 0 0 2>&1) &&
-      	  SEARCH=$RES
+          SEARCH=$RES
       if [ -n "$SEARCH" ]
       then
         cryptgpg --keyserver keys.openpgp.org --search-keys "$SEARCH"
@@ -85,33 +87,33 @@ do
     2 )
       unset URL
       RES=$(dlg --inputbox "URL zum Herunterladen des Schlüssels:" 0 0 2>&1) &&
-      	 URL=$RES
+         URL=$RES
       if [ -n "$URL" ]
       then
-      	if ! KEY="$(curl -s "$URL")"
-      	then
-      	  dlg --msgbox "Download von $URL fehlgeschlagen." 0 0
-      	  continue
-      	fi
-      	cryptgpg --import <(echo "$KEY")
+        if ! KEY="$(curl -s "$URL")"
+        then
+          dlg --msgbox "Download von $URL fehlgeschlagen." 0 0
+          continue
+        fi
+        cryptgpg --import <(echo "$KEY")
         let CHANGES++
-      	anykey
+        anykey
       fi
     ;;
     3 )
       unset FILE
       RES=$(dlg --inputbox "Dateipfad zum  Schlüssel:" 0 0 2>&1) &&
-      	 FILE=$RES
+         FILE=$RES
       if [ -n "$FILE" ]
       then
-      	if ! [ -f "$FILE" ]
-      	then
-      	  dlg --msgbox "Datei $FILE existiert nicht." 0 0
-      	  continue
-      	fi
-      	cryptgpg --import "$FILE"
+        if ! [ -f "$FILE" ]
+        then
+          dlg --msgbox "Datei $FILE existiert nicht." 0 0
+          continue
+        fi
+        cryptgpg --import "$FILE"
         let CHANGES++
-      	anykey
+        anykey
       fi
     ;;
     4 )
@@ -121,40 +123,97 @@ do
     5 )
       if [ ${#KEY_IDs} -lt 1 ]
       then
-      	continue
+        continue
       fi
 
       unset MENU
       for KEY_ID in "${KEY_IDs[@]}"
       do
-      	addmenu "$KEY_ID" "Schlüssel entfernen"
+        addmenu "$KEY_ID" "Schlüssel entfernen"
       done
 
       REM=$(dlg --default-item "$REM" --menu \
-      	  "Schlüssel zum Entfernen auswählen:" 0 0 0 "${MENU[@]}" 2>&1) || continue
+          "Schlüssel zum Entfernen auswählen:" 0 0 0 "${MENU[@]}" 2>&1) || continue
       cryptgpg --delete-keys "$REM"
       let CHANGES++
       anykey
     ;;
-    test )
-        if ! [ -f "/etc/keys/cryptkey.gpg" ]
-        then
-          dlg --msgbox "/etc/keys/cryptkey.gpg wurde noch nicht erstellt. Bitte zunächst speichern." 0 0
-          continue
-        fi
+    6 )
+      if ! [ -f "/etc/keys/cryptkey.gpg" ] || [ "$CHANGES" -gt 0 ]
+      then
+        dlg --msgbox "/etc/keys/cryptkey.gpg wurde noch nicht erstellt oder die Schlüssel verändert. Bitte zunächst speichern." 0 0
+        continue
+      fi
 
-      	GPG_AGENT_SOCKET_PATH="$(gpgconf --homedir /etc/keys --list-dirs agent-socket)"
-      	dlg --msgbox "Es wird nun geprüft, ob der Cryptkey die Festplatte entschlüsseln kann.\nBitte zum Entschlüsseln eine der folgenden Informationen bereithalten:\n* Wiederherstellungpasswort\n* GPG-Smartcard\n\nFalls Sie für die Smartcard einen lokalen GPG-Agent per SSH-Fowarding verwenden möchten, bitte Forwarding an folgenden Pfad sicherstellen:\n\n$GPG_AGENT_SOCKET_PATH" 0 0
-      	echo "Bitte bestätigen, um Test zu starten."
-      	anykey
-        if ! cryptgpg -d /etc/keys/cryptkey.gpg | cryptsetup luksOpen --test-passphrase --debug --key-file /dev/stdin "$CRYPTROOT_PARENT"
+      GPG_AGENT_SOCKET_PATH="$(gpgconf --homedir /etc/keys --list-dirs agent-socket)"
+      dlg --msgbox "Es wird nun für jedes Gerät geprüft, ob der Cryptkey das Gerät bereits entschlüsseln kann oder er sonst hinzugefügt.\nBitte zum Entschlüsseln eine der folgenden Informationen bereithalten:\n* Wiederherstellungpasswort\n* GPG-Smartcard\n\nFalls Sie für die Smartcard einen lokalen GPG-Agent per SSH-Fowarding verwenden möchten, bitte Forwarding an folgenden Pfad sicherstellen:\n\n$GPG_AGENT_SOCKET_PATH\n\nSie werden ggf. mehrfach zum Entsperren des Cryptkeys aufgefordert." 0 0
+      echo "Bitte bestätigen, um Prozess zu starten."
+      echo
+      echo "GPG-Agent-Socket: $GPG_AGENT_SOCKET_PATH" 
+      echo
+      anykey
+      PASS="$(dlg --insecure --passwordbox "Aktuelles Wiederherstellungspasswort" 0 0 2>&1)"
+
+      for CRYPT in $(/usr/lib/iserv/cryptsetup/find_cryptdevices)
+      do
+        if ! cryptgpg --batch --passphrase-file <(echo "$PASS") -d /etc/keys/cryptkey.gpg  | cryptsetup luksOpen --test-passphrase --key-file /dev/stdin "$CRYPT"
         then
-          anykey
-          dlg --msgbox "Selbsttest fehlgeschlagen." 0 0
-          continue
+          dlg --msgbox "Füge /etc/keys/cryptkey.gpg zu $CRYPT hinzu. Bitte aktuelle Passphrase des Gerätes zweimal angeben." 0 0
+          cryptsetup luksAddKey "$CRYPT" <(cryptgpg -d /etc/keys/cryptkey.gpg)
+          cryptsetup luksAddKey "$CRYPT" <(cryptgpg -d /etc/keys/cryptkey.gpg)
+        else
+          dlg --msgbox "Cryptkey bereits in $CRYPT hinterlegt." 0 0
         fi
+      done
+      for CRYPT in $(/usr/lib/iserv/cryptsetup/find_cryptdevices)
+      do
+        if ! cryptsetup luksOpen --test-passphrase --key-file <(echo -n "$PASS") "$CRYPT"
+        then
+          dlg --msgbox "Füge Wiederherstellungspasswort zu $CRYPT hinzu. Bitte aktuelle Passphrase des Gerätes zweimal angeben." 0 0
+          cryptsetup luksAddKey "$CRYPT" <(echo -n "$PASS")
+          cryptsetup luksAddKey "$CRYPT" <(echo -n "$PASS")
+        else
+          dlg --msgbox "Wiederherstellungspasswort bereits in $CRYPT hinterlegt." 0 0
+        fi
+      done
+    ;;
+    7 )
+      PASS="$(dlg --insecure --passwordbox "Zu entfernende Passphrase" 0 0 2>&1)"
+
+      for CRYPT in $(/usr/lib/iserv/cryptsetup/find_cryptdevices)
+      do
+        if cryptsetup luksOpen --test-passphrase --key-file <(echo -n "$PASS") "$CRYPT"
+        then
+          dlg --msgbox "Entferne Passsphrase von $CRYPT. Bitte eine andere Passphrase des Gerätes zweimal angeben." 0 0
+          cryptsetup luksRemoveKey "$CRYPT" <(echo -n "$PASS")
+          cryptsetup luksRemoveKey "$CRYPT" <(echo -n "$PASS")
+        else
+          dlg --msgbox "Passphrase nicht in $CRYPT hinterlegt." 0 0
+        fi
+      done
+    ;;
+    test )
+      if ! [ -f "/etc/keys/cryptkey.gpg" ]
+      then
+        dlg --msgbox "/etc/keys/cryptkey.gpg wurde noch nicht erstellt. Bitte zunächst speichern." 0 0
+        continue
+      fi
+
+      GPG_AGENT_SOCKET_PATH="$(gpgconf --homedir /etc/keys --list-dirs agent-socket)"
+      dlg --msgbox "Es wird nun geprüft, ob der Cryptkey die Festplatte entschlüsseln kann.\nBitte zum Entschlüsseln eine der folgenden Informationen bereithalten:\n* Wiederherstellungpasswort\n* GPG-Smartcard\n\nFalls Sie für die Smartcard einen lokalen GPG-Agent per SSH-Fowarding verwenden möchten, bitte Forwarding an folgenden Pfad sicherstellen:\n\n$GPG_AGENT_SOCKET_PATH" 0 0
+      echo "Bitte bestätigen, um Test zu starten."
+      echo
+      echo "GPG-Agent-Socket: $GPG_AGENT_SOCKET_PATH" 
+      echo
+      anykey
+      if ! cryptgpg -d /etc/keys/cryptkey.gpg | cryptsetup luksOpen --test-passphrase --debug --key-file /dev/stdin "$CRYPTROOT_PARENT"
+      then
         anykey
-        dlg --msgbox "Selbsttest erfolgreich." 0 0
+        dlg --msgbox "Selbsttest fehlgeschlagen." 0 0
+        continue
+      fi
+      anykey
+      dlg --msgbox "Selbsttest erfolgreich." 0 0
     ;;
     exit )
       exit 0
@@ -162,32 +221,32 @@ do
     save )
       if [ ${#KEY_IDs} -lt 1 ]
       then
-      	dlg --msgbox "Keine GPG-Schlüssel im Schlüsselring gefunden.\n\nBitte Schlüssel hinzufügen." 0 0
-      	continue
+        dlg --msgbox "Keine GPG-Schlüssel im Schlüsselring gefunden.\n\nBitte Schlüssel hinzufügen." 0 0
+        continue
       fi
 
       RECIPIENTS=()
       for KEY_ID in "${KEY_IDs[@]}"
       do
-      	RECIPIENTS+=("-r" "$KEY_ID")
-      	# Must trust the key to allow signing with them
-      	echo -e "5\ny\n" | cryptgpg --command-fd 0 --expert --edit-key "$KEY_ID" trust
+        RECIPIENTS+=("-r" "$KEY_ID")
+        # Must trust the key to allow signing with them
+        echo -e "5\ny\n" | cryptgpg --command-fd 0 --expert --edit-key "$KEY_ID" trust
       done
 
       if [ -f "/etc/keys/cryptkey" ] && [ -f "/etc/keys/cryptkey.gpg" ]
       then
-      	dlg --msgbox "/etc/keys/cryptkey und /etc/keys/cryptkey.gpg existieren.\n\nBitte händisch bereinigen." 0 0
-      	continue
+        dlg --msgbox "/etc/keys/cryptkey und /etc/keys/cryptkey.gpg existieren.\n\nBitte händisch bereinigen." 0 0
+        continue
       elif [ -f "/etc/keys/cryptkey" ]
       then
-       	dlg --msgbox "Der Cryptkey wird nun zum ersten Mal mit GPG verschlüsselt.\n\nEs wird nun eine Passphrase generiert, die Sie zum Entsperren des Servers nutzen können, wenn kein GPG-Schlüssel verfügbar ist.\n\nBitte notieren/ausdrucken und an einem sicheren Ort verwahren." 0 0
-       	PASS="$(pwgen 64 1)"
-       	echo
-       	echo -e "Wiederherstellungspasswort:\n\n$PASS"
-       	anykey
-       	{ backup /etc/keys/cryptkey.gpg &&
-       	    cryptgpg --batch --passphrase-file <(echo "$PASS") -ec "${RECIPIENTS[@]}" /etc/keys/cryptkey &&
-       	    rm -f /etc/keys/cryptkey &&
+        dlg --msgbox "Der Cryptkey wird nun zum ersten Mal mit GPG verschlüsselt.\n\nEs wird nun eine Passphrase generiert, die Sie zum Entsperren des Servers nutzen können, wenn kein GPG-Schlüssel verfügbar ist.\n\nBitte notieren/ausdrucken und an einem sicheren Ort verwahren." 0 0
+        PASS="$(pwgen 64 1)"
+        echo
+        echo -e "Wiederherstellungspasswort:\n\n$PASS"
+        anykey
+        { backup /etc/keys/cryptkey.gpg &&
+            cryptgpg --batch --passphrase-file <(echo "$PASS") -ec "${RECIPIENTS[@]}" /etc/keys/cryptkey &&
+            rm -f /etc/keys/cryptkey &&
             dlg --msgbox "Erste Verschlüsselung erfolgreich durchgeführt." 0 0 &&
             update-initramfs -k all -u &&
             CHANGES=0;
@@ -197,23 +256,23 @@ do
         }
       elif [ -f "/etc/keys/cryptkey.gpg" ]
       then
-      	GPG_AGENT_SOCKET_PATH="$(gpgconf --homedir /etc/keys --list-dirs agent-socket)"
-      	dlg --msgbox "Der Cryptkey muss neu verschlüsselt werden.\n\nBitte zum Entschlüsseln die folgenden Informationen bereithalten:\n* Wiederherstellungpasswort\n* optional GPG-Smartcard\n\nFalls Sie für die Smartcard einen lokalen GPG-Agent per SSH-Fowarding verwenden möchten, bitte Forwarding an folgenden Pfad sicherstellen:\n\n$GPG_AGENT_SOCKET_PATH" 0 0
-      	PASS="$(dlg --insecure --passwordbox "Wiederherstellungspasswort" 0 0 2>&1)"
-      	# Generate stub keys for smartcard (in case not done yet)
-      	cryptgpg --card-status all > /dev/null
-      	touch /etc/keys/cryptkey.tmp
-      	chmod 600 /etc/keys/cryptkey.tmp
-      	{ cryptgpg --batch --passphrase-file <(echo "$PASS") -d /etc/keys/cryptkey.gpg > /etc/keys/cryptkey.tmp &&
-      	    cryptgpg --batch --passphrase-file <(echo "$PASS") -ec "${RECIPIENTS[@]}" /etc/keys/cryptkey.tmp &&
-      	    backup /etc/keys/cryptkey.gpg &&
-      	    mv /etc/keys/cryptkey.tmp.gpg /etc/keys/cryptkey.gpg &&
-      	    rm -f /etc/keys/cryptkey.tmp &&
-      	    anykey &&
-      	    dlg --msgbox "Neu-Verschlüsselung erfolgreich durchgeführt." 0 0 &&
-      	    update-initramfs -k all -u &&
-      	    CHANGES=0;
-      	} || { rm -f /etc/keys/cryptkey.tmp /etc/keys/cryptkey.tmp.gpg
+        GPG_AGENT_SOCKET_PATH="$(gpgconf --homedir /etc/keys --list-dirs agent-socket)"
+        dlg --msgbox "Der Cryptkey muss neu verschlüsselt werden.\n\nBitte zum Entschlüsseln die folgenden Informationen bereithalten:\n* Wiederherstellungpasswort\n* optional GPG-Smartcard\n\nFalls Sie für die Smartcard einen lokalen GPG-Agent per SSH-Fowarding verwenden möchten, bitte Forwarding an folgenden Pfad sicherstellen:\n\n$GPG_AGENT_SOCKET_PATH" 0 0
+        PASS="$(dlg --insecure --passwordbox "Wiederherstellungspasswort" 0 0 2>&1)"
+        # Generate stub keys for smartcard (in case not done yet)
+        cryptgpg --card-status all > /dev/null
+        touch /etc/keys/cryptkey.tmp
+        chmod 600 /etc/keys/cryptkey.tmp
+        { cryptgpg --batch --passphrase-file <(echo "$PASS") -d /etc/keys/cryptkey.gpg > /etc/keys/cryptkey.tmp &&
+            cryptgpg --batch --passphrase-file <(echo "$PASS") -ec "${RECIPIENTS[@]}" /etc/keys/cryptkey.tmp &&
+            backup /etc/keys/cryptkey.gpg &&
+            mv /etc/keys/cryptkey.tmp.gpg /etc/keys/cryptkey.gpg &&
+            rm -f /etc/keys/cryptkey.tmp &&
+            anykey &&
+            dlg --msgbox "Neu-Verschlüsselung erfolgreich durchgeführt." 0 0 &&
+            update-initramfs -k all -u &&
+            CHANGES=0;
+        } || { rm -f /etc/keys/cryptkey.tmp /etc/keys/cryptkey.tmp.gpg
             anykey
             dlg --msgbox "Neu-Verschlüsselung fehlgeschlagen." 0 0;
         }
