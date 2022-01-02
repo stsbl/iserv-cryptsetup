@@ -1,5 +1,8 @@
 MkDir 0700 root:root /etc/keys
 
+# Remove stubkeys to avoid re-encryption from asking for smartcard
+Remove /etc/keys/private-keys-v1.d/*.key
+
 Test "/etc/keys/cryptkey.gpg"
   [ -s "/etc/keys/cryptkey.gpg" ]
   ---
