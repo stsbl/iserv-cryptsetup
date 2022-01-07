@@ -154,17 +154,25 @@ do
       anykey
       PASS="$(dlg --insecure --passwordbox "Aktuelles Wiederherstellungspasswort" 0 0 2>&1)"
 
+      if [ -z "$PASS" ]
+      then
+        continue
+      fi
+
+      echo -n "$PASS" | cryptgpg --batch --yes --passphrase-fd 0 -d /etc/keys/cryptkey.gpg > /etc/keys/cryptkey.tmp || continue
       for CRYPT in $(/usr/lib/iserv/cryptsetup/find_cryptdevices)
       do
-        if ! cryptgpg --batch --passphrase-file <(echo "$PASS") -d /etc/keys/cryptkey.gpg  | cryptsetup luksOpen --test-passphrase --key-file /dev/stdin "$CRYPT"
+        if ! cryptsetup luksOpen --test-passphrase --key-file /etc/keys/cryptkey.tmp "$CRYPT"
         then
           dlg --msgbox "Füge /etc/keys/cryptkey.gpg zu $CRYPT hinzu. Bitte aktuelle Passphrase des Gerätes zweimal angeben." 0 0
-          cryptsetup luksAddKey "$CRYPT" <(cryptgpg -d /etc/keys/cryptkey.gpg)
-          cryptsetup luksAddKey "$CRYPT" <(cryptgpg -d /etc/keys/cryptkey.gpg)
+          cryptsetup luksAddKey "$CRYPT" /etc/keys/cryptkey.tmp
+          cryptsetup luksAddKey "$CRYPT" /etc/keys/cryptkey.tmp
         else
           dlg --msgbox "Cryptkey bereits in $CRYPT hinterlegt." 0 0
         fi
       done
+      rm -f /etc/keys/cryptkey.tmp
+
       for CRYPT in $(/usr/lib/iserv/cryptsetup/find_cryptdevices)
       do
         if ! cryptsetup luksOpen --test-passphrase --key-file <(echo -n "$PASS") "$CRYPT"
