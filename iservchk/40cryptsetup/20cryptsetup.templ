@@ -11,13 +11,14 @@ Test "/etc/keys/cryptkey.gpg"
 ChPerm 600 root:root /etc/keys/cryptkey.gpg
 
 $([ "$(/usr/lib/iserv/cryptsetup/query_cryptroot cryptroot name)" = "" ] && echo "Remove /etc/initramfs-tools/conf.d/cryptroot" || echo "Check /etc/initramfs-tools/conf.d/cryptroot")
-Check /etc/initramfs-tools/conf.d/net
+$([ -n "$InitramfsNetworkInterface" ] && echo "Check /etc/initramfs-tools/conf.d/net" || echo "Remove /etc/initramfs-tools/conf.d/net")
 
 Test "update /etc/crypttab"
-  diff -q <(grep -v '^#' /etc/crypttab | sort -u | perl -p -e '\$_ = (s/\s+/ /gr) . "\\n"') \
+  diff -q <(grep -v '^#' /etc/crypttab | sort -u | perl -p -e '\$_ = (s/\s+/ /gr) . "\\n"') \\
       <(gencrypttab | grep -v '^#' | sort -u | perl -p -e '\$_ = (s/\s+/ /gr) . "\\n"')
   ---
   gencrypttab > /etc/crypttab
 
 Shell "update-initramfs"
   ! [ "\$REPAIR" ] || update-initramfs -k all -u
+
