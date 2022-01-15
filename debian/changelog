@@ -1,10 +1,9 @@
 stsbl-iserv-cryptsetup (22.01.15.1) stable; urgency=medium
 
   * iservchk cryptsetup: Only generate /etc/initramfs-tools/conf.d/net
-    when needed iservchk cryptsetup: Only generate /etc/initramfs-
-    tools/conf.d/net when needed
+    when needed
 
- -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sat, 15 Jan 2022 17:56:02 +0100
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sat, 15 Jan 2022 17:56:42 +0100
 
 stsbl-iserv-cryptsetup (22.01.07.1) stable; urgency=medium
 
