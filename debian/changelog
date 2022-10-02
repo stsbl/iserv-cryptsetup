@@ -1,3 +1,12 @@
+stsbl-iserv-cryptsetup (22.10.02.1) stable; urgency=medium
+
+  * iservcfg cryptkey: Ignore non-existent /etc/keys/cryptkey.gpg when
+    backing up
+  * Added support for static configuration
+  * Added basic support for VLANs
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sun, 02 Oct 2022 21:28:00 +0200
+
 stsbl-iserv-cryptsetup (22.01.15.1) stable; urgency=medium
 
   * iservchk cryptsetup: Only generate /etc/initramfs-tools/conf.d/net
