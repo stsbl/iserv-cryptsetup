@@ -252,7 +252,7 @@ do
         echo
         echo -e "Wiederherstellungspasswort:\n\n$PASS"
         anykey
-        { backup /etc/keys/cryptkey.gpg &&
+        { backup -i /etc/keys/cryptkey.gpg &&
             cryptgpg --batch --passphrase-file <(echo "$PASS") -ec "${RECIPIENTS[@]}" /etc/keys/cryptkey &&
             rm -f /etc/keys/cryptkey &&
             dlg --msgbox "Erste Verschlüsselung erfolgreich durchgeführt." 0 0 &&
