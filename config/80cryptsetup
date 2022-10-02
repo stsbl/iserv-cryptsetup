@@ -12,3 +12,11 @@ description	The initramfs is able to configure exactly one network interface via
 group		Disk encryption
 type		string
 readonly	true
+
+InitramfsNetworkConfigureStatic:
+name		Configure network interface statically
+description	Use a static configuration for the "Network interface to be brought up on boot" instead of obtaining the IP address using DHCP. The configuration will be extracted from the running system using the tool netquery.
+group		Disk encryption
+type		bool
+readonly	true
+default		false

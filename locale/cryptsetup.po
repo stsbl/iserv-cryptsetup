@@ -19,6 +19,10 @@ msgid "Accounts authorized for Dropbear"
 msgstr "Zulässige Accounts für Dropbear"
 
 #: config/80cryptsetup
+msgid "Configure network interface statically"
+msgstr "Netzwerkschnittstelle statisch konfigurieren"
+
+#: config/80cryptsetup
 msgid "Disk encryption"
 msgstr "Festplattenverschlüsselung"
 
@@ -35,3 +39,14 @@ msgstr ""
 "Das initramfs kann exakt eine Netzwerkschnittstelle beim Starten über DHCP "
 "konfigurieren. Dies erlaubt, auf das initramfs über SSH zuzugreifen, um die "
 "Festplattenverschlüsselung oder andere Wartungsaufgaben durchzuführen."
+
+#: config/80cryptsetup
+msgid ""
+"Use a static configuration for the \"Network interface to be brought up on "
+"boot\" instead of obtaining the IP address using DHCP. The configuration "
+"will be extracted from the running system using the tool netquery."
+msgstr ""
+"Eine statische Konfiguration für die \"Netzwerkschnittstelle, die beim Start "
+"aktiviert werden soll\" verwenden, anstatt die IP-Adresse über DHCP "
+"abzurufen. Die Konfiguration wird aus dem laufenden System mit dem Werkzeug "
+"netquery ausgelesen."

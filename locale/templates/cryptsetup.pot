@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-12-05 02:04+0100\n"
+"POT-Creation-Date: 2022-10-02 21:24+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,6 +28,10 @@ msgid "Accounts authorized for Dropbear"
 msgstr ""
 
 #: config/80cryptsetup
+msgid "Configure network interface statically"
+msgstr ""
+
+#: config/80cryptsetup
 msgid "Disk encryption"
 msgstr ""
 
@@ -40,4 +44,11 @@ msgid ""
 "The initramfs is able to configure exactly one network interface via DHCP "
 "upon boot. This allows to access the initramfs using SSH in order to perform "
 "disk unlocking or other maintainance tasks."
+msgstr ""
+
+#: config/80cryptsetup
+msgid ""
+"Use a static configuration for the \"Network interface to be brought up on "
+"boot\" instead of obtaining the IP address using DHCP. The configuration "
+"will be extracted from the running system using the tool netquery."
 msgstr ""
