@@ -1,0 +1,21 @@
+#!/bin/sh
+# Execute iptables boot hook
+
+PREREQ=""
+
+prereqs()
+{
+     echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+     prereqs
+     exit 0
+     ;;
+esac
+
+if [ -e "/etc/initramfs-tools/iptables-commands.sh" ]
+then
+  . /etc/initramfs-tools/iptables-commands.sh
+fi

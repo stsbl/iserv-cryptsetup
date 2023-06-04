@@ -1,0 +1,118 @@
+#!/bin/sh
+
+PREREQ="bond vlan"
+
+prereqs()
+{
+     echo "$PREREQ"
+}
+
+case "$1" in
+prereqs)
+     prereqs
+     exit 0
+     ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_modules_dir kernel/net
+
+manual_add_modules nftables ip_tables
+manual_add_modules xt_mac
+manual_add_modules xt_connlimit
+manual_add_modules nf_conncount
+manual_add_modules nf_nat_amanda
+manual_add_modules nf_conntrack_amanda
+manual_add_modules nfnetlink_log
+manual_add_modules nf_nat_ftp
+manual_add_modules nf_conntrack_ftp
+manual_add_modules nf_nat_h323
+manual_add_modules nf_conntrack_h323
+manual_add_modules nf_nat_irc
+manual_add_modules nf_conntrack_irc
+manual_add_modules nf_nat_pptp
+manual_add_modules nf_conntrack_pptp
+manual_add_modules nf_nat_sip
+manual_add_modules nf_conntrack_sip
+manual_add_modules nf_nat_tftp
+manual_add_modules nf_conntrack_tftp
+manual_add_modules xt_set
+manual_add_modules nft_compat
+manual_add_modules xt_conntrack
+manual_add_modules xt_tcpudp
+manual_add_modules xt_TCPMSS
+manual_add_modules xt_NFLOG
+manual_add_modules xt_state
+manual_add_modules nf_reject_ipv4
+manual_add_modules xt_u32
+manual_add_modules xt_length
+manual_add_modules xt_policy
+manual_add_modules xt_REDIRECT
+manual_add_modules xt_nat
+manual_add_modules xt_CT
+manual_add_modules nf_reject_ipv6
+manual_add_modules xt_CHECKSUM
+manual_add_modules nf_conntrack_netlink
+manual_add_modules xt_MASQUERADE
+manual_add_modules x_tables
+manual_add_modules nft_chain_nat
+manual_add_modules nf_nat
+manual_add_modules nf_conntrack
+manual_add_modules nf_defrag_ipv6
+manual_add_modules nf_defrag_ipv4
+manual_add_modules nft_counter
+manual_add_modules nf_tables
+manual_add_modules nfnetlink
+
+copy_exec /usr/sbin/iptables-apply /sbin
+copy_exec /usr/sbin/nfnl_osf /sbin
+copy_exec /usr/sbin/xtables-legacy-multi /sbin
+copy_exec /usr/sbin/xtables-nft-multi /sbin
+copy_exec /usr/sbin/arptables-nft /sbin
+copy_exec /usr/sbin/arptables-nft-restore /sbin
+copy_exec /usr/sbin/arptables-nft-save /sbin
+copy_exec /usr/sbin/ebtables-nft /sbin
+copy_exec /usr/sbin/ebtables-nft-restore /sbin
+copy_exec /usr/sbin/ebtables-nft-save /sbin
+copy_exec /usr/sbin/ip6tables-apply /sbin
+copy_exec /usr/sbin/ip6tables-legacy /sbin
+copy_exec /usr/sbin/ip6tables-legacy-restore /sbin
+copy_exec /usr/sbin/ip6tables-legacy-save /sbin
+copy_exec /usr/sbin/ip6tables-nft /sbin
+copy_exec /usr/sbin/ip6tables-nft-restore /sbin
+copy_exec /usr/sbin/ip6tables-nft-save /sbin
+copy_exec /usr/sbin/ip6tables-restore-translate /sbin
+copy_exec /usr/sbin/ip6tables-translate /sbin
+copy_exec /usr/sbin/iptables-legacy /sbin
+copy_exec /usr/sbin/iptables-legacy-restore /sbin
+copy_exec /usr/sbin/iptables-legacy-save /sbin
+copy_exec /usr/sbin/iptables-nft /sbin
+copy_exec /usr/sbin/iptables-nft-restore /sbin
+copy_exec /usr/sbin/iptables-nft-save /sbin
+copy_exec /usr/sbin/iptables-restore-translate /sbin
+copy_exec /usr/sbin/iptables-translate /sbin
+copy_exec /usr/sbin/xtables-monitor /sbin
+copy_exec /usr/bin/iptables-xml /bin
+
+# Executables managed by update-alternatives
+ln -s "$(basename "$(realpath /usr/sbin/iptables-restore)")" "${DESTDIR}/sbin/iptables-restore"
+ln -s "$(basename "$(realpath /usr/sbin/iptables-save)")" "${DESTDIR}/sbin/iptables-save"
+ln -s "$(basename "$(realpath /usr/sbin/iptables)")" "${DESTDIR}/sbin/iptables"
+ln -s "$(basename "$(realpath /usr/sbin/ip6tables-restore)")" "${DESTDIR}/sbin/ip6tables-restore"
+ln -s "$(basename "$(realpath /usr/sbin/ip6tables-save)")" "${DESTDIR}/sbin/ip6tables-save"
+ln -s "$(basename "$(realpath /usr/sbin/ip6tables)")" "${DESTDIR}/sbin/ip6tables"
+ln -s "$(basename "$(realpath /usr/sbin/arptables-restore)")" "${DESTDIR}/sbin/arptables-restore"
+ln -s "$(basename "$(realpath /usr/sbin/arptables-save)")" "${DESTDIR}/sbin/arptables-save"
+ln -s "$(basename "$(realpath /usr/sbin/arptables)")" "${DESTDIR}/sbin/arptables"
+ln -s "$(basename "$(realpath /usr/sbin/ebtables-restore)")" "${DESTDIR}/sbin/ebtables-restore"
+ln -s "$(basename "$(realpath /usr/sbin/ebtables-save)")" "${DESTDIR}/sbin/ebtables-save"
+ln -s "$(basename "$(realpath /usr/sbin/ebtables)")" "${DESTDIR}/sbin/ebtables"
+
+if [ -e "/etc/initramfs-tools/iptables-commands.sh" ]
+then
+  mkdir -p "${DESTDIR}/etc/initramfs-tools"
+  cp -a "/etc/initramfs-tools/iptables-commands.sh" "${DESTDIR}/etc/initramfs-tools/iptables-commands.sh"
+fi
+
+copy_exec /usr/sbin/ipset /sbin

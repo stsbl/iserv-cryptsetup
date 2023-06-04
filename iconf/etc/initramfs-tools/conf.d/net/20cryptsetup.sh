@@ -19,7 +19,7 @@ then
   if [ "$InitramfsNetworkConfigureStatic" ]
   then
     GW_IP="$(ip -json -4 route show default | jq --arg IFACE "$IFACE" -r '.[] | select(.dev==$IFACE) | .gateway')"
-    IP="$(netquery "if ip::$GW_IP:mask:" | awk "\$1 == \"$IFACE\" { print \$2 }" | head -n 1):$(head -n 1 /etc/hostname)"
+    IP="$(netquery "if ip::$GW_IP:mask:host:if" | awk "\$1 == \"$IFACE\" { print \$2 }" | head -n 1 | sed "s/host/$(head -n 1 /etc/hostname)/g")"
   fi
 
   cat <<EOT

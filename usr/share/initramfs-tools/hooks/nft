@@ -1,0 +1,28 @@
+#!/bin/sh
+
+PREREQ="iptables"
+
+prereqs()
+{
+     echo "$PREREQ"
+}
+
+case "$1" in
+prereqs)
+     prereqs
+     exit 0
+     ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /usr/sbin/nft /sbin
+
+if [ -e "/etc/initramfs-tools/firewall.nft" ]
+then
+  mkdir -p "${DESTDIR}/etc/initramfs-tools"
+  cp -a /etc/initramfs-tools/firewall.nft "${DESTDIR}/etc/initramfs-tools/firewall.nft"
+fi
+
+mkdir -p "${DESTDIR}/usr/share/stsbl/iserv-cryptsetup/nft"
+cp -a "/usr/share/stsbl/iserv-cryptsetup/nft/default-structure.nft" "${DESTDIR}/usr/share/stsbl/iserv-cryptsetup/nft/default-structure.nft"
