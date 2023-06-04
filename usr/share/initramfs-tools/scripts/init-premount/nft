@@ -1,0 +1,21 @@
+#!/bin/sh
+# Execute nft boot hook
+
+PREREQ="iptables udev nft-default"
+
+prereqs()
+{
+     echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+     prereqs
+     exit 0
+     ;;
+esac
+
+  if [ -e "/etc/initramfs-tools/firewall.nft" ]
+then
+  nft -f /etc/initramfs-tools/firewall.nft
+fi

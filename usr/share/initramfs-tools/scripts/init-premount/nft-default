@@ -1,7 +1,6 @@
 #!/bin/sh
-# Execute nft boot hook
 
-PREREQ="iptables"
+PREREQ="udev"
 
 prereqs()
 {
@@ -16,8 +15,3 @@ prereqs)
 esac
 
 nft -f /usr/share/stsbl/iserv-cryptsetup/nft/default-structure.nft
-
-if [ -e "/etc/initramfs-tools/firewall.nft" ]
-then
-  nft -f /etc/initramfs-tools/firewall.nft
-fi
