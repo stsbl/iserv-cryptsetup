@@ -1,38 +1,34 @@
-# TRANSLATION CATALOG OF STSBL-ISERV-CRYPTSETUP.
-# Copyright (C) 2023 IServ GmbH
-# This file is distributed under the same license as the stsbl-iserv-cryptsetup package.
-# IServ GmbH <info@iserv.eu>, 2023.
-#
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: stsbl-iserv-cryptsetup\n"
-"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 
 #: config/80cryptsetup
 msgid "Accounts authorized for Dropbear"
-msgstr ""
+msgstr "Für Dropbear autorisierte Konten"
 
 #: config/80cryptsetup
 msgid ""
 "Accounts, whose SSH keys can be used to access the initramfs via SSH as root "
 "in order to perform disk unlocking or other maintainance tasks."
 msgstr ""
+"Konten, deren SSH-Schlüssel verwendet werden können, um über SSH als "
+"root auf das initramfs zuzugreifen, um Festplatten entsperren oder "
+"andere Wartungsaufgaben durchzuführen."
 
 #: config/80cryptsetup
 msgid "Configure network interface statically"
-msgstr ""
+msgstr "Netzwerkschnittstelle statisch konfigurieren"
 
 #: config/80cryptsetup
 msgid "Disk encryption"
-msgstr ""
+msgstr "Festplattenverschlüsselung"
 
 #: config/80cryptsetup
 msgid "Network interface to be brought up on boot"
-msgstr ""
+msgstr "Beim Booten zu konfigurierende Netzwerkschnittstelle"
 
 #: config/80cryptsetup
 msgid ""
@@ -40,6 +36,9 @@ msgid ""
 "upon boot. This allows to access the initramfs using SSH in order to perform "
 "disk unlocking or other maintainance tasks."
 msgstr ""
+"Das initramfs ist in der Lage, beim Booten genau eine Netzwerkschnittstelle "
+"über DHCP zu konfigurieren. Dies ermöglicht den Zugriff auf das initramfs "
+"über SSH, um Festplatten zu entsperren oder andere Wartungsaufgaben durchzuführen."
 
 #: config/80cryptsetup
 msgid ""
@@ -47,3 +46,7 @@ msgid ""
 "boot\" instead of obtaining the IP address using DHCP. The configuration "
 "will be extracted from the running system using the tool netquery."
 msgstr ""
+"Eine statische Konfiguration für \"Beim Booten zu konfigurierende "
+"Netzwerkschnittstelle\" verwenden, anstatt die IP-Adresse über "
+"DHCP zu beziehen. Die Konfiguration wird mit dem Tool "
+"netquery aus dem laufenden System extrahiert."
