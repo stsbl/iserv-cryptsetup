@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+# Fix broken upgrade path
+for dir in /usr/share/iserv/iconf/etc/dropbear-initramfs/authorized_keys
+do
+  # Scary: This will delete a path that has been replaced with a symlink.
+  # As of right now there doesn't appear to be any other way.
+  [ -d "$dir" ] && ! [ -L "$dir" ] && rm -rf "$dir" || true
+done
+
+#DEBHELPER#
