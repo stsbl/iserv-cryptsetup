@@ -1,4 +1,5 @@
 Check /etc/dropbear-initramfs/authorized_keys
+Check /etc/ppp-initramfs/config
 
 Shell "update-initramfs"
   ! [ "$REPAIR" ] || update-initramfs -k all -u
