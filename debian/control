@@ -13,33 +13,17 @@ Package: stsbl-iserv-cryptsetup
 Architecture: all
 Depends: ${misc:Depends},
   ${perl:Depends},
-  cryptsetup,
-  cryptsetup-initramfs,
   curl,
   dialog,
-  dirmngr,
-  dropbear-initramfs,
-  gpg,
-  gpg-agent,
   initramfs-tools,
   initramfs-tools-extras,
   iproute2,
-  ipset,
-  iptables,
-  iserv-config,
-  iserv-config-file,
-  iserv-update,
-  libccid,
+  stsbl-iserv-cryptsetup-base,
   libjson-perl,
   libpcsclite1,
   libstring-shellquote-perl,
   libtie-ixhash-perl,
-  nftables,
-  pcscd,
-  pinentry-tty,
-  ppp-initramfs,
   pwgen,
-  scdaemon,
 Description:  LUKS-GPG-Festplattenverschlüsselung für IServ
  Unterstützt die Verschlüsselung der Systemfestplatte über LUKS samt
  Entsperrung über ein hybrides Verfahren mit einem GPG-Schlüssel.
@@ -48,8 +32,47 @@ Description:  LUKS-GPG-Festplattenverschlüsselung für IServ
  von Debian eingerichtet werden. Empfohlen wird folgende Konfiguration:
  madm-RAID, darauf LUKS-Container und darin ein LVM.
  .
- Bestehende Server können nicht umgestellt werden. Es muss entweder ein Debian
- mit dem Standard-Debian-Installer (der IServ Installer unterstützt keine
- Verschlüsselung) installiert oder der bestehende Server auf ein neu
- eingerichtetes Dateisystem umgezogen werden.
+ Bestehende Server können nicht umgestellt werden. Es muss entweder mit den
+ Expertenoptionen vom IServ Installer ein neuer Server passend installiert
+ oder der bestehende Server auf ein neu eingerichtetes Dateisystem umgezogen
+ werden.
+Tag: suite::iserv
+
+Package: stsbl-iserv-cryptsetup-base
+Architecture: all
+Depends: ${misc:Depends},
+  ${perl:Depends},
+  cryptsetup,
+  cryptsetup-initramfs,
+  dirmngr,
+  dropbear-initramfs,
+  gnupg,
+  gpg,
+  gpg-agent,
+  initramfs-tools,
+  initramfs-tools-extras,
+  ipset,
+  iptables,
+  libccid,
+  libjson-perl,
+  libpcsclite1,
+  nftables,
+  pcscd,
+  pinentry-tty,
+  ppp-initramfs,
+  scdaemon,
+Breaks: stsbl-iserv-cryptsetup (<< 26.04.30),
+Replaces: stsbl-iserv-cryptsetup (<< 26.04.30),
+Description:  LUKS-GPG-Festplattenverschlüsselung für IServ
+ Unterstützt die Verschlüsselung der Systemfestplatte über LUKS samt
+ Entsperrung über ein hybrides Verfahren mit einem GPG-Schlüssel.
+ .
+ Der verschlüsselte Datenträger muss vorher über Standardwerkzeuge
+ von Debian eingerichtet werden. Empfohlen wird folgende Konfiguration:
+ madm-RAID, darauf LUKS-Container und darin ein LVM.
+ .
+ Bestehende Server können nicht umgestellt werden. Es muss entweder mit den
+ Expertenoptionen vom IServ Installer ein neuer Server passend installiert
+ oder der bestehende Server auf ein neu eingerichtetes Dateisystem umgezogen
+ werden.
 Tag: suite::iserv

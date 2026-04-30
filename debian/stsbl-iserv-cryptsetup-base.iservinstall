@@ -1,0 +1,6 @@
+lib/cryptsetup							usr/lib/iserv
+perl5/Stsbl/IServ/Cryptsetup.pm					usr/share/perl5/Stsbl/IServ
+sbin/gencrypttab						usr/sbin
+system-root/*							.
+usr/share/initramfs-tools					usr/share
+usr/share/stsbl/iserv-cryptsetup/nft/default-structure.nft	usr/share/stsbl/iserv-cryptsetup/nft
