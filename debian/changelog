@@ -1,3 +1,12 @@
+stsbl-iserv-cryptsetup (26.04.30.1) unstable; urgency=medium
+
+  * Fixed pcscd on Debian Trixie (missing libpcsclite_real.so and no
+    enforcement of Polkit in initramfs), configure gpg to use pcscd
+    explicitly to avoid LIBUSB_BUSY errors
+  * Extracted base package
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Thu, 30 Apr 2026 12:03:48 +0200
+
 stsbl-iserv-cryptsetup (23.11.13.4) stable; urgency=medium
 
   * Fixed symlink upgrade path
