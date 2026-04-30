@@ -1,3 +1,2 @@
+I:system-root/*
 LICENSE*                               usr/share/doc/stsbl-iserv-cryptsetup
-H:usr/share/initramfs-tools            usr/share
-H:usr/share/stsbl/iserv-cryptsetup/nft usr/share/stsbl/iserv-cryptsetup
