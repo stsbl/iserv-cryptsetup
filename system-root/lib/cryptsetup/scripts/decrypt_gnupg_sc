@@ -1,32 +1,73 @@
 #!/bin/sh
- 
-# quick hack for starting pcscd
-mkdir -p /var/run/pcscd
-pcscd &
- 
-sleep 3
- 
+
+export PCSCLITE_NO_POLKIT=1
+
+# Polkit support starting from Debian Trixie, which isn't available in initramfs
+if pcscd --help | grep -q -- '^  --disable-polkit'
+then
+  pcscd --disable-polkit &
+else
+  pcscd &
+fi
+
 decrypt_gpg () {
  
         # we check for attachted cardreader
         # cardreaders with pinpad: they have to be attached before booting
         # for cardreaders without pinpad: just attach them later, if the script already
         # asks for Passphrase or PIN
+        restart_counter=1
+        failed=
+
+        while [ "$restart_counter" -le 6 ] && ! gpg -q --no-tty --homedir "$(dirname $1)" --card-status &> /dev/null
+        do
+                counter=1
+                while [ "$counter" -le 20 ] && ! gpg -q --no-tty  --homedir "$(dirname $1)" --card-status &> /dev/null
+                do
+                        echo "Smartcard not up yet, waiting ..." >&2
+                        sleep .5
+                        if gpg --homedir "$(dirname $1)" --card-status &> /dev/null
+                        then
+                                break 2
+                        fi
+                        counter=$((counter + 1))
+                done
+                if ! [ "$restart_counter" -le 6 ]
+                then
+                        echo "Timeout while waiting for smartcard."
+                        failed=1
+                elif [ "$restart_counter" -gt 1 ]
+                then
+                        echo "Smartcard unresponsive, restarting gpg-agent ..."
+                fi
+
+                killall -q gpp-agent gpg
+                restart_counter=$((restarter_counter + 1))
+        done
+
+        if [ "$failed" ]
+        then
+                echo "Smartcard did not come up in time. Cannot unlock using Smartcard, try recovery password instead."
+        fi
+
         if gpg -q --no-tty --homedir "$(dirname $1)" --card-status > /dev/null 2>&1 && sleep 2; then
                 echo "Please use the pinpad of your cardreader for PIN entry." >&2
-                if ! /usr/bin/gpg --homedir "$(dirname "$1")" \
-                        --trustdb-name /dev/null --decrypt "$1"; then
+                if ! gpg --homedir "$(dirname "$1")" --trustdb-name /dev/null --decrypt "$1"; then
                         return 1
                 fi
+                killall -q gpg-agent pcscd
+
                 return 0
         else
                 echo "Performing GPG key decryption ..." >&2
                 if ! /lib/cryptsetup/askpass \
                         "Enter passphrase for key $1, or PIN for your cardreader: " | \
-                        /usr/bin/gpg -q --batch --homedir "$(dirname "$1")" \
+                        gpg -q --batch --homedir "$(dirname "$1")" \
                         --trustdb-name /dev/null --passphrase-fd 0 --decrypt "$1"; then
                         return 1
                 fi
+                killall -q gpg-agent pcscd
+
                 return 0
         fi
 }

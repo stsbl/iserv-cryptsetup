@@ -19,10 +19,10 @@ iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
 
-# Flush All Iptables Chains/Firewall rules
+# Flush all iptables chains/Firewall rules
 iptables -F
 
-# Delete all Iptables Chains
+# Delete all iptables chains
 iptables -X
 
 # Flush all counters too

@@ -15,7 +15,7 @@ prereqs)
      ;;
 esac
 
-  if [ -e "/etc/initramfs-tools/firewall.nft" ]
+if [ -e "/etc/initramfs-tools/firewall.nft" ]
 then
   nft -f /etc/initramfs-tools/firewall.nft
 fi

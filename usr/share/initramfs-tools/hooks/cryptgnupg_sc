@@ -1,5 +1,4 @@
 #!/bin/sh
- 
 set -e
  
 PREREQ="cryptroot"
@@ -8,6 +7,14 @@ prereqs()
 {
         echo "$PREREQ"
 }
+
+install_lib()
+{
+  for lib in $(ldconfig -p | awk '$1 == "'"$1"'" { print $4 }')
+  do
+    copy_exec "$lib"
+  done
+}
  
 case $1 in
 prereqs)
@@ -15,14 +22,19 @@ prereqs)
         exit 0
         ;;
 esac
- 
+
 . /usr/share/initramfs-tools/hook-functions
- 
+
+# Unify run directory and create convenience symlink for GnuPG home
+ln -sf /etc/keys "${DESTDIR}/.gnupg"
+mkdir -p "${DESTDIR}/var"
+ln -sf /run "${DESTDIR}/var/run"
+
 # Hooks for loading Gnupg software and key into the initramfs
  
 # Check whether cryptroot hook has installed decrypt_gnupg_sc script
 if [ ! -x ${DESTDIR}/lib/cryptsetup/scripts/decrypt_gnupg_sc ] ; then
-  exit 0
+    exit 0
 fi
 
 # Install cryptroot key files into initramfs
@@ -36,7 +48,7 @@ if [ "${keys}" != "none" ]; then
     fi
     for key in ${keys} ; do
         keydir=$(dirname ${key})
-        echo "WARNING: GnuPG key $key is copied to initramfs" >&2
+        echo "I: GnuPG-encrypted key file $key is copied to initramfs." >&2
         if [ ! -d ${DESTDIR}/${keydir} ] ; then
             mkdir -p ${DESTDIR}/${keydir}
         fi
@@ -46,6 +58,8 @@ if [ "${keys}" != "none" ]; then
         if [ -e ${keydir}/gpg.conf ] ; then
             cp -p ${keydir}/gpg.conf ${DESTDIR}/${keydir}
         fi
+        echo "disable-ccid" >> "${DESTDIR}/${keydir}/scdaemon.conf"
+        echo "pcsc-shared" >> "${DESTDIR}/${keydir}/scdaemon.conf"
     done
 fi
  
@@ -63,16 +77,40 @@ copy_exec /usr/lib/pcsc/drivers/serial/libccidtwin.so
 copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
 copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
 copy_exec /etc/libccid_Info.plist
-if uname -a | grep -q x86_64; then
-        copy_exec /usr/lib/x86_64-linux-gnu/libpcsclite.so.1.0.0
-        copy_exec /lib/x86_64-linux-gnu/libgcc_s.so.1
-else
-        copy_exec /usr/lib/i386-linux-gnu/libpcsclite.so.1.0.0
-        copy_exec /lib/i386-linux-gnu/libgcc_s.so.1
-fi
+
+install_lib "libpcsclite.so.1"
+install_lib "libgcc_s.so.1"
+install_lib "libpcsclite_real.so.1"
  
 # we need some more stuff from gnupg2
+copy_exec /usr/lib/gnupg/keyboxd
+
 copy_exec /usr/lib/gnupg/scdaemon
+copy_exec /usr/bin/gpg-card
+
+copy_exec /usr/lib/gnupg/gpg-auth
+copy_exec /usr/bin/gpgconf
+copy_exec /usr/bin/gpg-connect-agent
 copy_exec /usr/bin/pinentry
+copy_exec /usr/lib/gnupg/gpg-check-pattern
+copy_exec /usr/lib/gnupg/gpg-preset-passphrase
+copy_exec /usr/lib/gnupg/gpg-protect-tool
+copy_exec /usr/bin/dirmngr
+copy_exec /usr/bin/dirmngr-client
+copy_exec /usr/lib/gnupg/dirmngr_ldap
+
+copy_exec /usr/bin/gpg-mail-tube
+copy_exec /usr/bin/gpgparsemail
+copy_exec /usr/bin/gpgsplit
+copy_exec /usr/bin/gpgtar
+copy_exec /usr/bin/kbxutil
+copy_exec /usr/bin/lspgpot
+copy_exec /usr/bin/migrate-pubring-from-classic-gpg
+copy_exec /usr/bin/watchgnupg
+copy_exec /usr/lib/gnupg/gpg-pair-tool
+copy_exec /usr/sbin/addgnupghome
+copy_exec /usr/sbin/applygnupgdefaults
+
+copy_exec /usr/bin/gpgsm
  
 exit 0
