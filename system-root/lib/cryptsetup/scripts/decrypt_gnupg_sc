@@ -2,16 +2,22 @@
 
 export PCSCLITE_NO_POLKIT=1
 
+killall pcscd gpg-agent scdaemon &> /dev/null
+rm -rf /run/pcscd
+mkdir -p -m0755 /run/pcscd
+
 # Polkit support starting from Debian Trixie, which isn't available in initramfs
 if pcscd --help | grep -q -- '^  --disable-polkit'
 then
-  pcscd --disable-polkit &
+  pcscd --disable-polkit --foreground &
 else
-  pcscd &
+  pcscd --foreground &
 fi
 
+sleep 10
+
 decrypt_gpg () {
- 
+
         # we check for attachted cardreader
         # cardreaders with pinpad: they have to be attached before booting
         # for cardreaders without pinpad: just attach them later, if the script already
@@ -34,15 +40,15 @@ decrypt_gpg () {
                 done
                 if ! [ "$restart_counter" -le 6 ]
                 then
-                        echo "Timeout while waiting for smartcard."
+                        echo "Timeout while waiting for smartcard." >&2
                         failed=1
                 elif [ "$restart_counter" -gt 1 ]
                 then
-                        echo "Smartcard unresponsive, restarting gpg-agent ..."
+                        echo "Smartcard unresponsive, restarting gpg-agent ..." >&2
                 fi
 
-                killall -q gpp-agent gpg
-                restart_counter=$((restarter_counter + 1))
+                killall gpp-agent gpg &> /dev/null
+                restart_counter=$((restart_counter + 1))
         done
 
         if [ "$failed" ]
@@ -52,12 +58,21 @@ decrypt_gpg () {
 
         if gpg -q --no-tty --homedir "$(dirname $1)" --card-status > /dev/null 2>&1 && sleep 2; then
                 echo "Please use the pinpad of your cardreader for PIN entry." >&2
-                if ! gpg --homedir "$(dirname "$1")" --trustdb-name /dev/null --decrypt "$1"; then
-                        return 1
-                fi
-                killall -q gpg-agent pcscd
 
-                return 0
+                KEY_ID="$(gpg --homedir "$(dirname $1)" --with-colons --card-status | awk -F: '$1 == "fpr" { print $2 }')"
+
+                RETURN=1
+                DECRYPTED_DATA="$(echo | gpg --no-tty --homedir "$(dirname $1)" --batch --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d /etc/keys/cryptkey.gpg)"
+
+                if [ "$DECRYPTED_DATA" ] || [ "$?" -eq 0 ]
+                then
+                        echo -n "$DECRYPTED_DATA"
+                        RETURN=0
+                fi
+
+                killall gpg-agent pcscd scdaemon &> /dev/null
+
+                return "$RETURN"
         else
                 echo "Performing GPG key decryption ..." >&2
                 if ! /lib/cryptsetup/askpass \
@@ -66,7 +81,7 @@ decrypt_gpg () {
                         --trustdb-name /dev/null --passphrase-fd 0 --decrypt "$1"; then
                         return 1
                 fi
-                killall -q gpg-agent pcscd
+                killall gpg-agent pcscd scdaemon &> /dev/null
 
                 return 0
         fi

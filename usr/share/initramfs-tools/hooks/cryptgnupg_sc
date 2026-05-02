@@ -15,7 +15,15 @@ install_lib()
     copy_exec "$lib"
   done
 }
- 
+
+install_executable()
+{
+  if [ -x "$1" ]
+  then
+    copy_exec "$1"
+  fi
+}
+
 case $1 in
 prereqs)
         prereqs
@@ -62,55 +70,60 @@ if [ "${keys}" != "none" ]; then
         echo "pcsc-shared" >> "${DESTDIR}/${keydir}/scdaemon.conf"
     done
 fi
- 
+
 # Install gnupg software
-copy_exec /usr/bin/gpg
-copy_exec /usr/bin/gpg
-copy_exec /usr/bin/gpg-agent
- 
+install_executable /usr/bin/gpg
+install_executable /usr/bin/gpg
+install_executable /usr/bin/gpg-agent
+
 # install dirname
-copy_exec /usr/bin/dirname
+install_executable /usr/bin/dirname
 
 # some more libs for pcscd
-copy_exec /usr/sbin/pcscd
-copy_exec /usr/lib/pcsc/drivers/serial/libccidtwin.so
-copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
-copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
-copy_exec /etc/libccid_Info.plist
+install_executable /usr/sbin/pcscd
+install_executable /usr/lib/pcsc/drivers/serial/libccidtwin.so
+install_executable /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+install_executable /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+install_executable /etc/libccid_Info.plist
 
 install_lib "libpcsclite.so.1"
 install_lib "libgcc_s.so.1"
 install_lib "libpcsclite_real.so.1"
- 
-# we need some more stuff from gnupg2
-copy_exec /usr/lib/gnupg/keyboxd
 
-copy_exec /usr/lib/gnupg/scdaemon
-copy_exec /usr/bin/gpg-card
+# we need some more stuff from gnupg
+install_executable /usr/lib/gnupg/keyboxd
 
-copy_exec /usr/lib/gnupg/gpg-auth
-copy_exec /usr/bin/gpgconf
-copy_exec /usr/bin/gpg-connect-agent
-copy_exec /usr/bin/pinentry
-copy_exec /usr/lib/gnupg/gpg-check-pattern
-copy_exec /usr/lib/gnupg/gpg-preset-passphrase
-copy_exec /usr/lib/gnupg/gpg-protect-tool
-copy_exec /usr/bin/dirmngr
-copy_exec /usr/bin/dirmngr-client
-copy_exec /usr/lib/gnupg/dirmngr_ldap
+install_executable /usr/lib/gnupg/scdaemon
+install_executable /usr/bin/gpg-card
 
-copy_exec /usr/bin/gpg-mail-tube
-copy_exec /usr/bin/gpgparsemail
-copy_exec /usr/bin/gpgsplit
-copy_exec /usr/bin/gpgtar
-copy_exec /usr/bin/kbxutil
-copy_exec /usr/bin/lspgpot
-copy_exec /usr/bin/migrate-pubring-from-classic-gpg
-copy_exec /usr/bin/watchgnupg
-copy_exec /usr/lib/gnupg/gpg-pair-tool
-copy_exec /usr/sbin/addgnupghome
-copy_exec /usr/sbin/applygnupgdefaults
+install_executable /usr/lib/gnupg/gpg-auth
+install_executable /usr/bin/gpgconf
+install_executable /usr/bin/gpg-connect-agent
+install_executable /usr/bin/pinentry
+install_executable /usr/lib/gnupg/gpg-check-pattern
+install_executable /usr/lib/gnupg/gpg-preset-passphrase
+install_executable /usr/lib/gnupg/gpg-protect-tool
+install_executable /usr/bin/dirmngr
+install_executable /usr/bin/dirmngr-client
+install_executable /usr/lib/gnupg/dirmngr_ldap
 
-copy_exec /usr/bin/gpgsm
- 
+install_executable /usr/bin/gpg-mail-tube
+install_executable /usr/bin/gpgparsemail
+install_executable /usr/bin/gpgsplit
+install_executable /usr/bin/gpgtar
+install_executable /usr/bin/kbxutil
+install_executable /usr/bin/lspgpot
+install_executable /usr/bin/migrate-pubring-from-classic-gpg
+install_executable /usr/bin/watchgnupg
+install_executable /usr/lib/gnupg/gpg-pair-tool
+install_executable /usr/sbin/addgnupghome
+install_executable /usr/sbin/applygnupgdefaults
+
+install_executable /usr/bin/gpgsm
+
+install_executable /usr/bin/ATR_analysis
+install_executable /usr/bin/gscriptor
+install_executable /usr/bin/pcsc_scan
+install_executable /usr/bin/scriptor
+
 exit 0
