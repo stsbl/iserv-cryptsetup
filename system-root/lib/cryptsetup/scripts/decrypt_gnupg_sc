@@ -148,12 +148,15 @@ decrypt_gpg()
                 sleep 2
 
                 gpg -q --batch --homedir "$GNUPGHOME" --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d "$1"
-                RETURN="$?"
 
                 killall gpg-agent pcscd scdaemon &> /dev/null
                 hide_message
 
-                return "$RETURN"
+                # Ignore gpg exit code since it isn't reliable at all and sometimes
+                # randomly returns exit code 2, even if decryption finally was
+                # successful. When decryption really failed, cryptsetup will
+                # return an error anyway.
+                return 0
 
         else
                 show_message "Performing GPG key decryption ..." >&2
