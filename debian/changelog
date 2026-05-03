@@ -1,3 +1,9 @@
+stsbl-iserv-cryptsetup (26.05.03.8) unstable; urgency=medium
+
+  * Ignore gpg exit code when performing pinpad decryption
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sun, 03 May 2026 18:01:53 +0200
+
 stsbl-iserv-cryptsetup (26.05.03.7) unstable; urgency=medium
 
   * Fixed pcscd throwing garbage output on STDOUT, fixed handling
