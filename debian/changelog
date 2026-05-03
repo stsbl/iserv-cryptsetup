@@ -1,3 +1,9 @@
+stsbl-iserv-cryptsetup (26.05.03.2) unstable; urgency=medium
+
+  * Fixed installing decrypt_gnupg_sc in both packages
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sun, 03 May 2026 11:09:54 +0200
+
 stsbl-iserv-cryptsetup (26.05.03.1) unstable; urgency=medium
 
   * Fixed install rules
