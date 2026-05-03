@@ -1,13 +1,27 @@
 #!/bin/sh
 
+CURRENT_MESSAGE_TEXT=""
+
+hide_message()
+{
+        if [ -n "$CURRENT_MESSAGE_TEXT" ] && [ -x "/bin/plymouth" ]
+        then
+                plymouth hide-message --text="$CURRENT_MESSAGE_TEXT"
+        fi
+}
+
 show_message()
 {
         if [ -x "/bin/plymouth" ]
         then
+                hide_message
+
                 plymouth display-message --text="$1"
         else
                 echo "$1"
         fi
+
+        CURRENT_MESSAGE_TEXT="$1"
 }
 
 export PCSCLITE_NO_POLKIT=1
@@ -161,10 +175,7 @@ decrypt_gpg()
 
                 killall gpg-agent pcscd scdaemon &> /dev/null
 
-                if [ -x "/bin/plymouth" ]
-                then
-                        plymouth hide-message
-                fi
+                hide_message
 
                 return 0
         fi
