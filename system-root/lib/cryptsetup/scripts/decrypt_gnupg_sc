@@ -16,12 +16,21 @@ fi
 
 sleep 10
 
+show_message()
+{
+        if [ -x "/bin/plymouth" ]
+        then
+                plymouth display-message --text="$1"
+        fi
+        echo "$1"
+}
+
 is_pinpad_reader()
 {
         CARD_SERIAL=$(gpg --homedir /etc/keys --with-colons --card-status 2>/dev/null | awk -F: '$1 == "serial" {print $2}')
 
         if [ -z "$CARD_SERIAL" ]; then
-                echo "No smartcard found." >&2
+                show_message "No smartcard found." >&2
                 return 2
         fi
 
@@ -57,7 +66,8 @@ is_pinpad_reader()
         return "$IS_PINPAD"
 }
 
-decrypt_gpg () {
+decrypt_gpg()
+{
 
         # we check for attachted cardreader
         # cardreaders with pinpad: they have to be attached before booting
@@ -71,7 +81,7 @@ decrypt_gpg () {
                 counter=1
                 while [ "$counter" -le 20 ] && ! gpg -q --no-tty  --homedir "$(dirname $1)" --card-status &> /dev/null
                 do
-                        echo "Smartcard not up yet, waiting ..." >&2
+                        show_message "Smartcard not up yet, waiting ..." >&2
                         sleep .5
                         if gpg --homedir "$(dirname $1)" --card-status &> /dev/null
                         then
@@ -81,11 +91,13 @@ decrypt_gpg () {
                 done
                 if ! [ "$restart_counter" -le 6 ]
                 then
-                        echo "Timeout while waiting for smartcard." >&2
+                        show_message "Timeout while waiting for smartcard." >&2
+                        sleep 1
                         failed=1
                 elif [ "$restart_counter" -gt 1 ]
                 then
-                        echo "Smartcard unresponsive, restarting gpg-agent ..." >&2
+                        show_message "Smartcard unresponsive, restarting gpg-agent ..." >&2
+                        sleep 1
                 fi
 
                 killall gpp-agent gpg &> /dev/null
@@ -94,13 +106,15 @@ decrypt_gpg () {
 
         if [ "$failed" ]
         then
-                echo "Smartcard did not come up in time. Cannot unlock using Smartcard, try recovery password instead."
+                show_message "Smartcard did not come up in time. Cannot unlock using Smartcard, try recovery password instead."
+                sleep 5
         fi
 
         KEY_ID="$(gpg --homedir "$(dirname $1)" --with-colons --card-status | awk -F: '$1 == "fpr" { print $2 }')"
 
-        if is_pinpad_reader && sleep 2; then
-                echo "Please use the pinpad of your cardreader for PIN entry." >&2
+        if is_pinpad_reader; then
+                show_message "Please use the pinpad of your cardreader for PIN entry to unlock LUKS partition." >&2
+                sleep 2
 
                 RETURN=1
                 DECRYPTED_DATA="$(echo | gpg --no-tty --homedir "$(dirname $1)" --batch --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d /etc/keys/cryptkey.gpg)"
@@ -115,7 +129,7 @@ decrypt_gpg () {
 
                 return "$RETURN"
         else
-                echo "Performing GPG key decryption ..." >&2
+                show_message "Performing GPG key decryption ..." >&2
                 if [ -n "$KEY_ID" ]
                 then
                         if ! /lib/cryptsetup/askpass \
@@ -140,12 +154,12 @@ decrypt_gpg () {
 }
 
 if [ ! -x /usr/bin/gpg ]; then
-        echo "$0: /usr/bin/gpg is not available" >&2
+        show_message "$0: /usr/bin/gpg is not available" >&2
         exit 1
 fi
 
 if [ -z "$1" ]; then
-        echo "$0: missing key as argument" >&2
+        show_message "$0: missing key as argument" >&2
         exit 1
 fi
 
