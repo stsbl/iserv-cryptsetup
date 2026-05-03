@@ -26,7 +26,7 @@ fi
 sleep 10
 show_message "Smartcard daemon initalized" >&2
 
-i:qs_pinpad_reader()
+is_pinpad_reader()
 {
     # 1. Get display name of reader from GPG
     # Example: "SCM Microsystems Inc. SPR 532 [CCID Interface] (51271922202191) 00 00"
