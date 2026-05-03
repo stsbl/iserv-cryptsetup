@@ -81,10 +81,12 @@ install_executable /usr/bin/dirname
 
 # some more libs for pcscd
 install_executable /usr/sbin/pcscd
-install_executable /usr/lib/pcsc/drivers/serial/libccidtwin.so
-install_executable /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
-install_executable /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
-install_executable /etc/libccid_Info.plist
+
+# Note: These are not executables, using copy_exec directly
+copy_exec /usr/lib/pcsc/drivers/serial/libccidtwin.so
+copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
+copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
+copy_exec /etc/libccid_Info.plist
 
 install_lib "libpcsclite.so.1"
 install_lib "libgcc_s.so.1"
