@@ -1,21 +1,5 @@
 #!/bin/sh
 
-export PCSCLITE_NO_POLKIT=1
-
-killall pcscd gpg-agent scdaemon &> /dev/null
-rm -rf /run/pcscd
-mkdir -p -m0755 /run/pcscd
-
-# Polkit support starting from Debian Trixie, which isn't available in initramfs
-if pcscd --help | grep -q -- '^  --disable-polkit'
-then
-  pcscd --disable-polkit --foreground &
-else
-  pcscd --foreground &
-fi
-
-sleep 10
-
 show_message()
 {
         if [ -x "/bin/plymouth" ]
@@ -25,65 +9,94 @@ show_message()
         echo "$1"
 }
 
-is_pinpad_reader()
-{
-        CARD_SERIAL=$(gpg --homedir /etc/keys --with-colons --card-status 2>/dev/null | awk -F: '$1 == "serial" {print $2}')
+export PCSCLITE_NO_POLKIT=1
 
-        if [ -z "$CARD_SERIAL" ]; then
-                show_message "No smartcard found." >&2
-                return 2
+killall pcscd gpg-agent scdaemon &> /dev/null
+rm -rf /run/pcscd
+mkdir -p -m0755 /run/pcscd
+
+show_message "Initalizing Smartcard daemon ..." >&2
+if pcscd --help | grep -q -- '^  --disable-polkit'
+then
+  pcscd --disable-polkit --foreground &
+else
+  pcscd --foreground &
+fi
+
+sleep 10
+show_message "Smartcard daemon initalized" >&2
+
+i:qs_pinpad_reader()
+{
+    # 1. Get display name of reader from GPG
+    # Example: "SCM Microsystems Inc. SPR 532 [CCID Interface] (51271922202191) 00 00"
+    GPG_READER_FULL=$(gpg --homedir "$GNUPGHOME" --with-colons --card-status 2>/dev/null | awk -F: '$1 == "Reader" {print $2}')
+
+    [ -z "$GPG_READER_FULL" ] && return 2
+
+    # 2. Extract serial number from GPG reader string in clings
+    # If no clings are there (e.g. YubiKey), set 'X' as flag for dummy value
+    T_SER=$(echo "$GPG_READER_FULL" | grep -o "(.*)" | tr -d '()')
+    [ -z "$T_SER" ] && T_SER="X"
+
+    # 3. Check for  USB path in sysfs
+    for dev_dir in /sys/bus/usb/devices/*
+    do
+        [ -f "$dev_dir/serial" ] || [ "$T_SER" = "X" ] || continue
+
+        # Get serial number if available
+        CURR_SER=$(cat "$dev_dir/serial" 2>/dev/null || echo "X")
+
+        # Serial number matches OR it is a device which does not report serial numbers (e.g. Yubikey) (Check via Product)
+        MATCH=
+        if [ "$T_SER" != "X" ] && [ "$CURR_SER" = "$T_SER" ]
+        then
+            MATCH=1
+        elif [ "$T_SER" = "X" ]
+        then
+            # YubiKeys does not have a serial number (reports 000000): Search name in GPG reader info
+            USB_PROD=$(cat "$dev_dir/product" 2>/dev/null)
+            [ -n "$USB_PROD" ] && echo "$GPG_READER_FULL" | grep -q "$USB_PROD" && MATCH=1
         fi
 
-        IS_PINPAD=0
+        if [ "$MATCH" ]
+        then
+            # Check interface .0 of USB device
+            # $dev_dir/*:*.0/
+            IF_DIR=$(ls -d "$dev_dir/"*:*.0 2>/dev/null | head -n 1)
 
-        for dev_path in /sys/bus/usb/devices/*; do
-                if [ -f "$dev_path/interface" ] || [ -f "$dev_path/product" ]; then
-                        SER=$(cat "$dev_path/serial" 2>/dev/null)
-                        PROD=$(cat "$dev_path/product" 2>/dev/null)
-
-                        case "$SER" in
-                            *"$CARD_SERIAL"*) MATCH=1 ;;
-                            *) MATCH= ;;
-                        esac
-
-
-                        if [ "$MATCH" ]; then
-                            READER_NAME="$PROD"
-                            for iface in "$dev_dir"/*:*/bInterfaceProtocol; do
-                                if [ -f "$iface" ]; then
-                                    PROT=$(cat "$iface")
-                                    if [ "$PROT" = "01" ]; then
-                                        IS_PINPAD=1
-                                        break
-                                    fi
-                                fi
-                            done
-                            break
-                        fi
+            if [ -n "$IF_DIR" ] && [ -f "$IF_DIR/bInterfaceClass" ]; then
+                I_CLASS=$(cat "$IF_DIR/bInterfaceClass" | tr -d 'x0')
+                # Smartcard class (0b or 11)
+                if [ "$I_CLASS" = "b" ] || [ "$I_CLASS" = "11" ]; then
+                    # Pinpad indication: 3+ endpoints
+                    if [ "$(cat "$IF_DIR/bNumEndpoints")" -ge 3 ]; then
+                        return 0 # YES, pinpad detected (e.g. Cherry/SCM)
+                    fi
                 fi
-        done
+            fi
+            break
+        fi
+    done
 
-        return "$IS_PINPAD"
+    return 1 # NO, YubiKey (Composite) or other token without pinpad
 }
 
 decrypt_gpg()
 {
+        export GNUPGHOME="$(dirname "$1")"
 
-        # we check for attachted cardreader
-        # cardreaders with pinpad: they have to be attached before booting
-        # for cardreaders without pinpad: just attach them later, if the script already
-        # asks for Passphrase or PIN
         restart_counter=1
         failed=
 
-        while [ "$restart_counter" -le 6 ] && ! gpg -q --no-tty --homedir "$(dirname $1)" --card-status &> /dev/null
+        while [ "$restart_counter" -le 6 ] && ! gpg -q --no-tty --homedir "$GNUPGHOME" --card-status &> /dev/null
         do
                 counter=1
-                while [ "$counter" -le 20 ] && ! gpg -q --no-tty  --homedir "$(dirname $1)" --card-status &> /dev/null
+                while [ "$counter" -le 20 ] && ! gpg -q --no-tty  --homedir "$GNUPGHOME" --card-status &> /dev/null
                 do
                         show_message "Smartcard not up yet, waiting ..." >&2
                         sleep .5
-                        if gpg --homedir "$(dirname $1)" --card-status &> /dev/null
+                        if gpg --homedir "$GNUPGHOME" --card-status &> /dev/null
                         then
                                 break 2
                         fi
@@ -100,7 +113,7 @@ decrypt_gpg()
                         sleep 1
                 fi
 
-                killall gpp-agent gpg &> /dev/null
+                killall gpg-agent gpg &> /dev/null
                 restart_counter=$((restart_counter + 1))
         done
 
@@ -110,44 +123,47 @@ decrypt_gpg()
                 sleep 5
         fi
 
-        KEY_ID="$(gpg --homedir "$(dirname $1)" --with-colons --card-status | awk -F: '$1 == "fpr" { print $2 }')"
+        KEY_ID="$(gpg --homedir "$GNUPGHOME" --with-colons --card-status | awk -F: '$1 == "fpr" { print $2 }' | head -n 1)"
 
-        if is_pinpad_reader; then
+        if is_pinpad_reader
+        then
                 show_message "Please use the pinpad of your cardreader for PIN entry to unlock LUKS partition." >&2
                 sleep 2
 
-                RETURN=1
-                DECRYPTED_DATA="$(echo | gpg --no-tty --homedir "$(dirname $1)" --batch --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d /etc/keys/cryptkey.gpg)"
+                # Skip asking for symmetric password by sending empty STDIN
+                DECRYPTED_DATA="$(echo | gpg --no-tty --homedir "$GNUPGHOME" --batch --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d "$1")"
 
                 if [ "$DECRYPTED_DATA" ] || [ "$?" -eq 0 ]
                 then
                         echo -n "$DECRYPTED_DATA"
-                        RETURN=0
+                        killall gpg-agent pcscd scdaemon &> /dev/null
+                        return 0
                 fi
-
-                killall gpg-agent pcscd scdaemon &> /dev/null
-
-                return "$RETURN"
         else
                 show_message "Performing GPG key decryption ..." >&2
                 if [ -n "$KEY_ID" ]
                 then
-                        if ! /lib/cryptsetup/askpass \
-                                "Enter PIN for your cardreader: " | \
-                                gpg -q --batch --homedir "$(dirname "$1")" \
+                        # Card reader without pinpad, use askpass to retrieve PIN
+                        if ! /lib/cryptsetup/askpass "Enter PIN for your cardreader: " | \
+                                gpg -q --batch --homedir "$GNUPGHOME" \
                                 --trustdb-name /dev/null --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --decrypt "$1"; then
                                 return 1
                         fi
                 else
-                        if ! /lib/cryptsetup/askpass \
-                                "Enter passphrase for key $1: " | \
-                                gpg -q --batch --homedir "$(dirname "$1")" \
+                        # Try to decrypt with symmetric password as fallback
+                        if ! /lib/cryptsetup/askpass "Enter passphrase for key $1: " | \
+                                gpg -q --batch --homedir "$GNUPGHOME" \
                                 --trustdb-name /dev/null --pinentry-mode loopback --passphrase-fd 0 --decrypt "$1"; then
                                 return 1
                         fi
                 fi
 
                 killall gpg-agent pcscd scdaemon &> /dev/null
+
+                if [ -x "/bin/plymouth" ]
+                then
+                        plymouth hide-message
+                fi
 
                 return 0
         fi
@@ -164,6 +180,5 @@ if [ -z "$1" ]; then
 fi
 
 decrypt_gpg "$1"
-exit $?
-
+exit "$?"
 
