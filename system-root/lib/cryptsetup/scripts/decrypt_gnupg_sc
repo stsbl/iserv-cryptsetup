@@ -31,12 +31,14 @@ rm -rf /run/pcscd
 mkdir -p -m0755 /run/pcscd
 
 show_message "Initializing Smartcard daemon ..." >&2
-if pcscd --help | grep -q -- '^  --disable-polkit'
-then
-  pcscd --disable-polkit --foreground &
-else
-  pcscd --foreground &
-fi
+{
+     if pcscd --help | grep -q -- '^  --disable-polkit'
+     then
+               pcscd --disable-polkit --foreground &
+     else
+               pcscd --foreground &
+     fi
+} >&2
 
 sleep 10
 show_message "Smartcard daemon initialized" >&2
@@ -134,7 +136,7 @@ decrypt_gpg()
 
         if [ "$failed" ]
         then
-                show_message "Smartcard did not come up in time. Cannot unlock using Smartcard, try recovery password instead."
+                show_message "Smartcard did not come up in time. Cannot unlock using Smartcard, try recovery password instead." >&2
                 sleep 5
         fi
 
@@ -145,15 +147,14 @@ decrypt_gpg()
                 show_message "Please use the pinpad of your cardreader for PIN entry to unlock LUKS partition." >&2
                 sleep 2
 
-                # Skip asking for symmetric password by sending empty STDIN
-                DECRYPTED_DATA="$(echo | gpg --no-tty --homedir "$GNUPGHOME" --batch --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d "$1")"
+                gpg -q --batch --homedir "$GNUPGHOME" --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d "$1"
+                RETURN="$?"
 
-                if [ "$DECRYPTED_DATA" ] || [ "$?" -eq 0 ]
-                then
-                        echo -n "$DECRYPTED_DATA"
-                        killall gpg-agent pcscd scdaemon &> /dev/null
-                        return 0
-                fi
+                killall gpg-agent pcscd scdaemon &> /dev/null
+                hide_message
+
+                return "$RETURN"
+
         else
                 show_message "Performing GPG key decryption ..." >&2
                 if [ -n "$KEY_ID" ]
@@ -174,7 +175,6 @@ decrypt_gpg()
                 fi
 
                 killall gpg-agent pcscd scdaemon &> /dev/null
-
                 hide_message
 
                 return 0
