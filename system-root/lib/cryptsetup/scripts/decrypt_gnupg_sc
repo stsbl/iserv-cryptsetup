@@ -16,6 +16,47 @@ fi
 
 sleep 10
 
+is_pinpad_reader()
+{
+        CARD_SERIAL=$(gpg --homedir /etc/keys --with-colons --card-status 2>/dev/null | awk -F: '$1 == "serial" {print $2}')
+
+        if [ -z "$CARD_SERIAL" ]; then
+                echo "No smartcard found." >&2
+                return 2
+        fi
+
+        IS_PINPAD=0
+
+        for dev_path in /sys/bus/usb/devices/*; do
+                if [ -f "$dev_path/interface" ] || [ -f "$dev_path/product" ]; then
+                        SER=$(cat "$dev_path/serial" 2>/dev/null)
+                        PROD=$(cat "$dev_path/product" 2>/dev/null)
+
+                        case "$SER" in
+                            *"$CARD_SERIAL"*) MATCH=1 ;;
+                            *) MATCH= ;;
+                        esac
+
+
+                        if [ "$MATCH" ]; then
+                            READER_NAME="$PROD"
+                            for iface in "$dev_dir"/*:*/bInterfaceProtocol; do
+                                if [ -f "$iface" ]; then
+                                    PROT=$(cat "$iface")
+                                    if [ "$PROT" = "01" ]; then
+                                        IS_PINPAD=1
+                                        break
+                                    fi
+                                fi
+                            done
+                            break
+                        fi
+                fi
+        done
+
+        return "$IS_PINPAD"
+}
+
 decrypt_gpg () {
 
         # we check for attachted cardreader
@@ -56,10 +97,10 @@ decrypt_gpg () {
                 echo "Smartcard did not come up in time. Cannot unlock using Smartcard, try recovery password instead."
         fi
 
-        if gpg -q --no-tty --homedir "$(dirname $1)" --card-status > /dev/null 2>&1 && sleep 2; then
-                echo "Please use the pinpad of your cardreader for PIN entry." >&2
+        KEY_ID="$(gpg --homedir "$(dirname $1)" --with-colons --card-status | awk -F: '$1 == "fpr" { print $2 }')"
 
-                KEY_ID="$(gpg --homedir "$(dirname $1)" --with-colons --card-status | awk -F: '$1 == "fpr" { print $2 }')"
+        if is_pinpad_reader && sleep 2; then
+                echo "Please use the pinpad of your cardreader for PIN entry." >&2
 
                 RETURN=1
                 DECRYPTED_DATA="$(echo | gpg --no-tty --homedir "$(dirname $1)" --batch --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d /etc/keys/cryptkey.gpg)"
@@ -75,28 +116,39 @@ decrypt_gpg () {
                 return "$RETURN"
         else
                 echo "Performing GPG key decryption ..." >&2
-                if ! /lib/cryptsetup/askpass \
-                        "Enter passphrase for key $1, or PIN for your cardreader: " | \
-                        gpg -q --batch --homedir "$(dirname "$1")" \
-                        --trustdb-name /dev/null --passphrase-fd 0 --decrypt "$1"; then
-                        return 1
+                if [ -n "$KEY_ID" ]
+                then
+                        if ! /lib/cryptsetup/askpass \
+                                "Enter PIN for your cardreader: " | \
+                                gpg -q --batch --homedir "$(dirname "$1")" \
+                                --trustdb-name /dev/null --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --decrypt "$1"; then
+                                return 1
+                        fi
+                else
+                        if ! /lib/cryptsetup/askpass \
+                                "Enter passphrase for key $1: " | \
+                                gpg -q --batch --homedir "$(dirname "$1")" \
+                                --trustdb-name /dev/null --pinentry-mode loopback --passphrase-fd 0 --decrypt "$1"; then
+                                return 1
+                        fi
                 fi
+
                 killall gpg-agent pcscd scdaemon &> /dev/null
 
                 return 0
         fi
 }
- 
+
 if [ ! -x /usr/bin/gpg ]; then
         echo "$0: /usr/bin/gpg is not available" >&2
         exit 1
 fi
- 
+
 if [ -z "$1" ]; then
         echo "$0: missing key as argument" >&2
         exit 1
 fi
- 
+
 decrypt_gpg "$1"
 exit $?
 
