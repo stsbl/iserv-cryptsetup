@@ -1,3 +1,10 @@
+stsbl-iserv-cryptsetup (26.05.03.7) unstable; urgency=medium
+
+  * Fixed pcscd throwing garbage output on STDOUT, fixed handling
+    decrypted keydata in pinpad smartcard reader branch
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sun, 03 May 2026 17:10:00 +0200
+
 stsbl-iserv-cryptsetup (26.05.03.6) unstable; urgency=medium
 
   * Fixed hiding messages since Plymouth is confusing
