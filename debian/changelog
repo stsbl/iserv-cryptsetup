@@ -1,3 +1,13 @@
+stsbl-iserv-cryptsetup (26.05.03.1) unstable; urgency=medium
+
+  * Fixed install rules
+  * Improved compatibility with Debian Trixie
+  * Added support for card readers without pinpad (Yubikeys), those PIN
+    will be asked via askpass
+  * Added plymouth message support
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Sun, 03 May 2026 11:04:31 +0200
+
 stsbl-iserv-cryptsetup (26.04.30.1) unstable; urgency=medium
 
   * Fixed pcscd on Debian Trixie (missing libpcsclite_real.so and no
