@@ -61,8 +61,8 @@ Depends: ${misc:Depends},
   pinentry-tty,
   ppp-initramfs,
   scdaemon,
-Breaks: stsbl-iserv-cryptsetup (<< 26.04.30),
-Replaces: stsbl-iserv-cryptsetup (<< 26.04.30),
+Breaks: stsbl-iserv-cryptsetup (<< 26.05.03.2),
+Replaces: stsbl-iserv-cryptsetup (<< 26.05.03.2),
 Description:  LUKS-GPG-Festplattenverschlüsselung für IServ
  Unterstützt die Verschlüsselung der Systemfestplatte über LUKS samt
  Entsperrung über ein hybrides Verfahren mit einem GPG-Schlüssel.
