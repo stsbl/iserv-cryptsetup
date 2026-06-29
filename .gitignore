@@ -7,3 +7,4 @@ debian/*.debhelper
 /Makefile.iservmake
 /system-locale
 !/locale/templates/*_misc.pot
+/.worktrees/
