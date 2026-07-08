@@ -40,7 +40,7 @@ Tag: suite::iserv
 
 Package: stsbl-iserv-cryptsetup-base
 Architecture: all
-Depends: ${misc:Depends},
+Depends: iserv-server-dropbear, ${misc:Depends},
   ${perl:Depends},
   cryptsetup,
   cryptsetup-initramfs,

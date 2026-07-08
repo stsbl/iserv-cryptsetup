@@ -1,3 +1,0 @@
-Shell "update-initramfs"
-  ! [ "$REPAIR" ] || update-initramfs -k all -u
-
