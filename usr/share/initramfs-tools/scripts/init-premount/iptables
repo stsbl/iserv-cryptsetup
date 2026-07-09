@@ -15,7 +15,11 @@ prereqs)
      ;;
 esac
 
+. /scripts/functions
+
 if [ -e "/etc/initramfs-tools/iptables-commands.sh" ]
 then
+  log_begin_msg "Executing custom iptables commands"
   . /etc/initramfs-tools/iptables-commands.sh
+  log_end_msg
 fi

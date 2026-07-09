@@ -14,4 +14,8 @@ prereqs)
      ;;
 esac
 
+. /scripts/functions
+
+log_begin_msg "Flushing nftables ruleset"
 nft flush ruleset
+log_end_msg

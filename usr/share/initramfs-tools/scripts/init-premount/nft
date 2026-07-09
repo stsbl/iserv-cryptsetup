@@ -15,7 +15,11 @@ prereqs)
      ;;
 esac
 
+. /scripts/functions
+
 if [ -e "/etc/initramfs-tools/firewall.nft" ]
 then
+  log_begin_msg "Applying custom firewall.nft rules"
   nft -f /etc/initramfs-tools/firewall.nft
+  log_end_msg
 fi

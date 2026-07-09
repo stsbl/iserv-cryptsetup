@@ -14,4 +14,8 @@ prereqs)
      ;;
 esac
 
+. /scripts/functions
+
+log_begin_msg "Applying default nftables structure"
 nft -f /usr/share/stsbl/iserv-cryptsetup/nft/default-structure.nft
+log_end_msg
