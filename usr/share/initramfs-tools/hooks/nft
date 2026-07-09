@@ -16,13 +16,23 @@ esac
 
 . /usr/share/initramfs-tools/hook-functions
 
+verbose()
+{
+  if [ "${verbose}" = "y" ]; then
+    echo "nft:" "$@" >&2
+  fi
+}
+
+verbose "Copying nftables binary"
 copy_exec /usr/sbin/nft /sbin
 
 if [ -e "/etc/initramfs-tools/firewall.nft" ]
 then
+  verbose "Copying custom firewall.nft config"
   mkdir -p "${DESTDIR}/etc/initramfs-tools"
   cp -a /etc/initramfs-tools/firewall.nft "${DESTDIR}/etc/initramfs-tools/firewall.nft"
 fi
 
+verbose "Copying nft default structure"
 mkdir -p "${DESTDIR}/usr/share/stsbl/iserv-cryptsetup/nft"
 cp -a "/usr/share/stsbl/iserv-cryptsetup/nft/default-structure.nft" "${DESTDIR}/usr/share/stsbl/iserv-cryptsetup/nft/default-structure.nft"

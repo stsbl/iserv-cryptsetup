@@ -33,6 +33,13 @@ esac
 
 . /usr/share/initramfs-tools/hook-functions
 
+verbose()
+{
+  if [ "${verbose}" = "y" ]; then
+    echo "cryptgnupg_sc:" "$@" >&2
+  fi
+}
+
 # Unify run directory and create convenience symlink for GnuPG home
 ln -sf /etc/keys "${DESTDIR}/.gnupg"
 mkdir -p "${DESTDIR}/var"
@@ -56,7 +63,7 @@ if [ "${keys}" != "none" ]; then
     fi
     for key in ${keys} ; do
         keydir=$(dirname ${key})
-        echo "I: GnuPG-encrypted key file $key is copied to initramfs." >&2
+        verbose "GnuPG-encrypted key file $key is copied to initramfs."
         if [ ! -d ${DESTDIR}/${keydir} ] ; then
             mkdir -p ${DESTDIR}/${keydir}
         fi
@@ -72,14 +79,17 @@ if [ "${keys}" != "none" ]; then
 fi
 
 # Install gnupg software
+verbose "Installing GnuPG software"
 install_executable /usr/bin/gpg
 install_executable /usr/bin/gpg
 install_executable /usr/bin/gpg-agent
 
 # install dirname
+verbose "Installing dirname utility"
 install_executable /usr/bin/dirname
 
 # some more libs for pcscd
+verbose "Installing pcscd daemon and smartcard libraries"
 install_executable /usr/sbin/pcscd
 
 # Note: These are not executables, using copy_exec directly
@@ -93,6 +103,7 @@ install_lib "libgcc_s.so.1"
 install_lib "libpcsclite_real.so.1"
 
 # we need some more stuff from gnupg
+verbose "Installing GnuPG keyboxd and smartcard modules"
 install_executable /usr/lib/gnupg/keyboxd
 
 install_executable /usr/lib/gnupg/scdaemon

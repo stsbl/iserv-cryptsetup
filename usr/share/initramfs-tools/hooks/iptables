@@ -16,6 +16,14 @@ esac
 
 . /usr/share/initramfs-tools/hook-functions
 
+verbose()
+{
+  if [ "${verbose}" = "y" ]; then
+    echo "iptables:" "$@" >&2
+  fi
+}
+
+verbose "Copying iptables kernel modules"
 copy_modules_dir kernel/net
 
 manual_add_modules nftables ip_tables
@@ -65,6 +73,7 @@ manual_add_modules nft_counter
 manual_add_modules nf_tables
 manual_add_modules nfnetlink
 
+verbose "Copying iptables binaries"
 copy_exec /usr/sbin/iptables-apply /sbin
 copy_exec /usr/sbin/nfnl_osf /sbin
 copy_exec /usr/sbin/xtables-legacy-multi /sbin
@@ -96,6 +105,7 @@ copy_exec /usr/sbin/xtables-monitor /sbin
 copy_exec /usr/bin/iptables-xml /bin
 
 # Executables managed by update-alternatives
+verbose "Creating symlinks for iptables alternatives"
 ln -s "$(basename "$(realpath /usr/sbin/iptables-restore)")" "${DESTDIR}/sbin/iptables-restore"
 ln -s "$(basename "$(realpath /usr/sbin/iptables-save)")" "${DESTDIR}/sbin/iptables-save"
 ln -s "$(basename "$(realpath /usr/sbin/iptables)")" "${DESTDIR}/sbin/iptables"
@@ -111,6 +121,7 @@ ln -s "$(basename "$(realpath /usr/sbin/ebtables)")" "${DESTDIR}/sbin/ebtables"
 
 if [ -e "/etc/initramfs-tools/iptables-commands.sh" ]
 then
+  verbose "Copying custom iptables script config"
   mkdir -p "${DESTDIR}/etc/initramfs-tools"
   cp -a "/etc/initramfs-tools/iptables-commands.sh" "${DESTDIR}/etc/initramfs-tools/iptables-commands.sh"
 fi
