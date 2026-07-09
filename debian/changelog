@@ -1,4 +1,4 @@
-stsbl-iserv-cryptsetup (26.07.09.1) unstable; urgency=medium
+stsbl-iserv-cryptsetup (26.07.09.1) UNRELEASED; urgency=medium
 
   * Removed duplicate iptables and nftables initramfs hooks/scripts in favor of
     iserv-server-dropbear
