@@ -10,6 +10,7 @@ prereqs()
 
 install_lib()
 {
+  verbose "Installing library: $1"
   for lib in $(ldconfig -p | awk '$1 == "'"$1"'" { print $4 }')
   do
     copy_exec "$lib"
@@ -20,6 +21,7 @@ install_executable()
 {
   if [ -x "$1" ]
   then
+    verbose "Installing executable: $1"
     copy_exec "$1"
   fi
 }
@@ -79,31 +81,32 @@ if [ "${keys}" != "none" ]; then
 fi
 
 # Install gnupg software
-verbose "Installing GnuPG software"
 install_executable /usr/bin/gpg
 install_executable /usr/bin/gpg
 install_executable /usr/bin/gpg-agent
 
 # install dirname
-verbose "Installing dirname utility"
 install_executable /usr/bin/dirname
 
 # some more libs for pcscd
-verbose "Installing pcscd daemon and smartcard libraries"
 install_executable /usr/sbin/pcscd
 
 # Note: These are not executables, using copy_exec directly
-copy_exec /usr/lib/pcsc/drivers/serial/libccidtwin.so
-copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so
-copy_exec /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist
-copy_exec /etc/libccid_Info.plist
+for file in \
+  /usr/lib/pcsc/drivers/serial/libccidtwin.so \
+  /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Linux/libccid.so \
+  /usr/lib/pcsc/drivers/ifd-ccid.bundle/Contents/Info.plist \
+  /etc/libccid_Info.plist
+do
+  verbose "Installing file: $file"
+  copy_exec "$file"
+done
 
 install_lib "libpcsclite.so.1"
 install_lib "libgcc_s.so.1"
 install_lib "libpcsclite_real.so.1"
 
 # we need some more stuff from gnupg
-verbose "Installing GnuPG keyboxd and smartcard modules"
 install_executable /usr/lib/gnupg/keyboxd
 
 install_executable /usr/lib/gnupg/scdaemon
