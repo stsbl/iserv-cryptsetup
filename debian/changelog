@@ -1,3 +1,11 @@
+stsbl-iserv-cryptsetup (26.07.09.1) unstable; urgency=medium
+
+  * Removed duplicate iptables and nftables initramfs hooks/scripts in favor of
+    iserv-server-dropbear
+  * Added verbose logging support to all remaining initramfs scripts
+
+ -- Felix Jacobi <Felix@jacobi-hamburg.net>  Thu, 09 Jul 2026 09:04:00 +0200
+
 stsbl-iserv-cryptsetup (26.05.19.1) unstable; urgency=medium
 
   * Fixed base package upgrade path

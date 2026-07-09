@@ -3,4 +3,3 @@ perl5/Stsbl/IServ/Cryptsetup.pm					usr/share/perl5/Stsbl/IServ
 sbin/gencrypttab						usr/sbin
 system-root/lib/cryptsetup					lib/
 H:usr/share/initramfs-tools            				usr/share
-H:usr/share/stsbl/iserv-cryptsetup/nft 				usr/share/stsbl/iserv-cryptsetup
