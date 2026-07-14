@@ -5,6 +5,7 @@ stsbl-iserv-cryptsetup (26.07.09.1) UNRELEASED; urgency=medium
   * Added verbose logging support to all remaining initramfs scripts
   * Kill gpg-agent and pcscd on bottom using PID files, restart daemons
     on decryption failure, and added Busybox-compatible integration tests
+  * Hooked integration tests into iservmake tests target
 
  -- Felix Jacobi <Felix@jacobi-hamburg.net>  Thu, 09 Jul 2026 09:04:00 +0200
 
