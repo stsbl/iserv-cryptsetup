@@ -1,0 +1,65 @@
+#!/bin/sh
+
+PREREQ=""
+RUN_DIR="${CRYPTSETUP_RUN_DIR:-/run}"
+
+prereqs()
+{
+        echo "$PREREQ"
+}
+
+case $1 in
+prereqs)
+        prereqs
+        exit 0
+        ;;
+esac
+
+kill_process()
+{
+        pid="$1"
+        [ -n "$pid" ] || return 0
+        kill -0 "$pid" 2>/dev/null || return 0
+
+        kill "$pid" 2>/dev/null
+
+        limit=5
+        while [ "$limit" -gt 0 ]; do
+                sleep 0.2
+                kill -0 "$pid" 2>/dev/null || return 0
+                limit=$((limit - 1))
+        done
+
+        kill -9 "$pid" 2>/dev/null
+}
+
+kill_by_name()
+{
+        name="$1"
+        pidof "$name" &> /dev/null || return 0
+
+        killall "$name" &> /dev/null
+
+        limit=5
+        while [ "$limit" -gt 0 ]; do
+                sleep 0.2
+                pidof "$name" &> /dev/null || return 0
+                limit=$((limit - 1))
+        done
+
+        killall -9 "$name" &> /dev/null
+}
+
+if [ -f "$RUN_DIR/gpg-agent.pid" ]; then
+        kill_process "$(cat "$RUN_DIR/gpg-agent.pid")"
+        rm -f "$RUN_DIR/gpg-agent.pid"
+fi
+
+if [ -f "$RUN_DIR/pcscd.pid" ]; then
+        kill_process "$(cat "$RUN_DIR/pcscd.pid")"
+        rm -f "$RUN_DIR/pcscd.pid"
+fi
+
+kill_by_name scdaemon
+
+exit 0

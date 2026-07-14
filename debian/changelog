@@ -3,6 +3,8 @@ stsbl-iserv-cryptsetup (26.07.09.1) UNRELEASED; urgency=medium
   * Removed duplicate iptables and nftables initramfs hooks/scripts in favor of
     iserv-server-dropbear
   * Added verbose logging support to all remaining initramfs scripts
+  * Kill gpg-agent and pcscd on bottom using PID files, restart daemons
+    on decryption failure, and added Busybox-compatible integration tests
 
  -- Felix Jacobi <Felix@jacobi-hamburg.net>  Thu, 09 Jul 2026 09:04:00 +0200
 

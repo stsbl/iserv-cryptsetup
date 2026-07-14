@@ -1,6 +1,7 @@
 #!/bin/sh
 
 CURRENT_MESSAGE_TEXT=""
+RUN_DIR="${CRYPTSETUP_RUN_DIR:-/run}"
 
 hide_message()
 {
@@ -24,24 +25,85 @@ show_message()
         CURRENT_MESSAGE_TEXT="$1"
 }
 
+if [ -n "$CRYPTSETUP_ASKPASS" ]; then
+        ASKPASS_BIN="$CRYPTSETUP_ASKPASS"
+elif [ -x /lib/cryptsetup/askpass ]; then
+        ASKPASS_BIN="/lib/cryptsetup/askpass"
+elif command -v askpass >/dev/null; then
+        ASKPASS_BIN="askpass"
+else
+        ASKPASS_BIN=""
+fi
+
+askpass()
+{
+        if [ -n "$ASKPASS_BIN" ]; then
+                "$ASKPASS_BIN" "$@"
+        else
+                echo -n "$1" >&2
+                read -r response
+                echo "$response"
+        fi
+}
+
+kill_process()
+{
+        pid="$1"
+        [ -n "$pid" ] || return 0
+        kill -0 "$pid" 2>/dev/null || return 0
+
+        kill "$pid" 2>/dev/null
+
+        limit=5
+        while [ "$limit" -gt 0 ]; do
+                sleep 0.2
+                kill -0 "$pid" 2>/dev/null || return 0
+                limit=$((limit - 1))
+        done
+
+        kill -9 "$pid" 2>/dev/null
+}
+
+kill_by_name()
+{
+        name="$1"
+        pidof "$name" &> /dev/null || return 0
+
+        killall "$name" &> /dev/null
+
+        limit=5
+        while [ "$limit" -gt 0 ]; do
+                sleep 0.2
+                pidof "$name" &> /dev/null || return 0
+                limit=$((limit - 1))
+        done
+
+        killall -9 "$name" &> /dev/null
+}
+
 export PCSCLITE_NO_POLKIT=1
 
-killall pcscd gpg-agent scdaemon &> /dev/null
-rm -rf /run/pcscd
-mkdir -p -m0755 /run/pcscd
+if ! [ -f "$RUN_DIR/pcscd.pid" ] || ! kill -0 $(cat "$RUN_DIR/pcscd.pid") 2>/dev/null; then
+        kill_by_name gpg-agent
+        kill_by_name pcscd
+        kill_by_name scdaemon
+        rm -rf "$RUN_DIR/pcscd"
+        mkdir -p -m0755 "$RUN_DIR/pcscd"
 
-show_message "Initializing Smartcard daemon ..." >&2
-{
-     if pcscd --help | grep -q -- '^  --disable-polkit'
-     then
-               pcscd --disable-polkit --foreground &
-     else
-               pcscd --foreground &
-     fi
-} >&2
+        show_message "Initializing Smartcard daemon ..." >&2
+        {
+             if pcscd --help | grep -q -- '^  --disable-polkit'
+             then
+                       pcscd --disable-polkit --foreground &
+             else
+                       pcscd --foreground &
+             fi
+             echo $! > "$RUN_DIR/pcscd.pid"
+        } >&2
 
-sleep 10
-show_message "Smartcard daemon initialized" >&2
+        sleep 10
+        show_message "Smartcard daemon initialized" >&2
+fi
 
 is_pinpad_reader()
 {
@@ -103,6 +165,10 @@ decrypt_gpg()
 {
         export GNUPGHOME="$(dirname "$1")"
 
+        if ! [ -f "$RUN_DIR/gpg-agent.pid" ] || ! kill -0 $(cat "$RUN_DIR/gpg-agent.pid") 2>/dev/null; then
+                gpg-agent --daemon --homedir "$GNUPGHOME" --pid-file "$RUN_DIR/gpg-agent.pid" &> /dev/null
+        fi
+
         restart_counter=1
         failed=
 
@@ -130,7 +196,9 @@ decrypt_gpg()
                         sleep 1
                 fi
 
-                killall gpg-agent gpg &> /dev/null
+                kill_by_name gpg-agent
+                kill_by_name gpg
+                gpg-agent --daemon --homedir "$GNUPGHOME" --pid-file "$RUN_DIR/gpg-agent.pid" &> /dev/null
                 restart_counter=$((restart_counter + 1))
         done
 
@@ -149,7 +217,6 @@ decrypt_gpg()
 
                 gpg -q --batch --homedir "$GNUPGHOME" --try-secret-key "${KEY_ID}!" --ignore-mdc-error -d "$1"
 
-                killall gpg-agent pcscd scdaemon &> /dev/null
                 hide_message
 
                 # Ignore gpg exit code since it isn't reliable at all and sometimes
@@ -163,29 +230,28 @@ decrypt_gpg()
                 if [ -n "$KEY_ID" ]
                 then
                         # Card reader without pinpad, use askpass to retrieve PIN
-                        if ! /lib/cryptsetup/askpass "Enter PIN for your cardreader: " | \
+                        if ! askpass "Enter PIN for your cardreader: " | \
                                 gpg -q --batch --homedir "$GNUPGHOME" \
                                 --trustdb-name /dev/null --pinentry-mode loopback --passphrase-fd 0 --try-secret-key "${KEY_ID}!" --decrypt "$1"; then
                                 return 1
                         fi
                 else
                         # Try to decrypt with symmetric password as fallback
-                        if ! /lib/cryptsetup/askpass "Enter passphrase for key $1: " | \
+                        if ! askpass "Enter passphrase for key $1: " | \
                                 gpg -q --batch --homedir "$GNUPGHOME" \
                                 --trustdb-name /dev/null --pinentry-mode loopback --passphrase-fd 0 --decrypt "$1"; then
                                 return 1
                         fi
                 fi
 
-                killall gpg-agent pcscd scdaemon &> /dev/null
                 hide_message
 
                 return 0
         fi
 }
 
-if [ ! -x /usr/bin/gpg ]; then
-        show_message "$0: /usr/bin/gpg is not available" >&2
+if ! command -v gpg >/dev/null; then
+        show_message "$0: gpg is not available" >&2
         exit 1
 fi
 
@@ -195,5 +261,17 @@ if [ -z "$1" ]; then
 fi
 
 decrypt_gpg "$1"
-exit "$?"
+rc=$?
+if [ $rc -ne 0 ]; then
+        if [ -f "$RUN_DIR/gpg-agent.pid" ]; then
+                kill_process "$(cat "$RUN_DIR/gpg-agent.pid")"
+                rm -f "$RUN_DIR/gpg-agent.pid"
+        fi
+        if [ -f "$RUN_DIR/pcscd.pid" ]; then
+                kill_process "$(cat "$RUN_DIR/pcscd.pid")"
+                rm -f "$RUN_DIR/pcscd.pid"
+        fi
+        kill_by_name scdaemon
+fi
+exit $rc
 
